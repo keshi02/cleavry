@@ -1,0 +1,23 @@
+{
+  "name": "Cleavry — 透過処理エディタ",
+  "short_name": "Cleavry",
+  "description": "Cleave the background, keep the art. ブラウザ完結の透過処理エディタ — AI 背景除去・連結成分分離・手動仕上げ。",
+  "start_url": "./eraser.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1e1e1e",
+  "theme_color": "#1e1e1e",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 192 192%22><rect width=%22192%22 height=%22192%22 fill=%22%231e1e1e%22 rx=%2832%22/><path d=%22M138 60a36 36 0 1 0 0 72 36 36 0 0 0 25.5-10.5%22 fill=%22none%22 stroke=%22%236c7eff%22 stroke-width=%2210%22 stroke-linecap=%22round%22/><path d=%22M118 78l-20 18 20 18%22 fill=%22none%22 stroke=%22%236c7eff%22 stroke-width=%2210%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22><rect width=%22512%22 height=%22512%22 fill=%22%231e1e1e%22 rx=%2284%22/><path d=%22M368 160a96 96 0 1 0 0 192 96 96 0 0 0 68-28%22 fill=%22none%22 stroke=%22%236c7eff%22 stroke-width=%2226%22 stroke-linecap=%22round%22/><path d=%22M315 208l-53 48 53 48%22 fill=%22none%22 stroke=%22%236c7eff%22 stroke-width=%2226%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+input_models/*.onnx
+output_models/*.onnx
+*.onnx_data

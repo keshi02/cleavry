@@ -1,0 +1,6 @@
+onnx>=1.18.0
+onnxsim>=0.4.36
+onnxruntime>=1.20.0
+huggingface_hub>=0.19.0
+ml_dtypes>=0.5.0
+# numpy is resolved transitively. Python 3.13 needs numpy>=2.x.
