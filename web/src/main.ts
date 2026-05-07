@@ -9,6 +9,7 @@ import { $, isOverlayActive } from './utils/dom';
 import { isMac } from './utils/platform';
 import { showToast } from './ui/toast';
 import { initTheme, cycleTheme } from './ui/theme';
+import { showModal } from './ui/modal';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -92,67 +93,6 @@ function showError(msg) {
     title: 'エラー',
     message: String(msg),
     buttons: [{ label: 'OK', value: true, primary: true }],
-  });
-}
-
-// ── Custom modal (replaces native confirm / alert) ──────────────────
-// Returns a promise that resolves with the value of the chosen button.
-// `buttons` is an array of `{ label, value, primary }`. Default value
-// returned on Esc / backdrop click is the value of the LAST button (which
-// should be the cancel/secondary action — we follow native confirm's
-// "Esc cancels" convention).
-function showModal({ title = '', message = '', buttons = [{ label: 'OK', value: true, primary: true }] }) {
-  return new Promise(resolve => {
-    const overlay = document.createElement('div');
-    overlay.className = 'app-modal-overlay';
-    const box = document.createElement('div');
-    box.className = 'app-modal-box';
-    if (title) {
-      const t = document.createElement('h3');
-      t.className = 'app-modal-title';
-      t.textContent = title;
-      box.appendChild(t);
-    }
-    if (message) {
-      const m = document.createElement('div');
-      m.className = 'app-modal-message';
-      m.textContent = message;
-      box.appendChild(m);
-    }
-    const row = document.createElement('div');
-    row.className = 'app-modal-buttons';
-    let firstFocus = null;
-    buttons.forEach(b => {
-      const btn = document.createElement('button');
-      btn.textContent = b.label;
-      if (b.primary) {
-        btn.classList.add('primary');
-        if (!firstFocus) firstFocus = btn;
-      }
-      btn.addEventListener('mousedown', e => e.preventDefault());
-      btn.onclick = () => close(b.value);
-      row.appendChild(btn);
-    });
-    box.appendChild(row);
-    overlay.appendChild(box);
-
-    function close(value) {
-      document.removeEventListener('keydown', onKey, true);
-      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-      resolve(value);
-    }
-    function onKey(e) {
-      if (e.key === 'Escape') {
-        e.preventDefault(); e.stopPropagation();
-        close(buttons[buttons.length - 1].value);
-      } else if (e.key === 'Enter' && firstFocus) {
-        e.preventDefault(); e.stopPropagation();
-        close((buttons.find(b => b.primary) || buttons[0]).value);
-      }
-    }
-    document.addEventListener('keydown', onKey, true);
-    document.body.appendChild(overlay);
-    if (firstFocus) firstFocus.focus();
   });
 }
 
