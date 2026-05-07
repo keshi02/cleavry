@@ -12,11 +12,11 @@ import { initTheme, cycleTheme } from './ui/theme';
 import { showModal } from './ui/modal';
 import { saveSession, loadSession, clearSession } from './persist/autosave';
 import { segmentBackground } from './ai/background';
-import { feather } from './image/feather';
 import {
   showOriginalOverlay, hideOriginalOverlay, toggleOriginalOverlay,
   setOriginalOverlayOpacity,
 } from './ui/originalOverlay';
+import { saveImage } from './io/save';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -1498,156 +1498,24 @@ async function runAIBackgroundRemoval() {
 }
 
 // ============================================================================
-// Returns workData with feather applied if the toggle is on, otherwise
-// workData unchanged. Used by save / export paths.
-function workDataForExport() {
-  if (!state.featherActive || !state.workData) return state.workData;
-  return feather(state.workData, state.imgW, state.imgH, state.featherStrength | 0 || 1);
-}
-
-// ============================================================================
-// Crop save — write just the rectangle selection out as a fresh image.
-// Honours the same feather toggle and saveFormat as the regular save.
-// ============================================================================
-function saveRectCrop() {
-  if (!state.workData) { showError('画像が読み込まれていません'); return; }
-  if (!state.rectSelection) { showError('矩形範囲が指定されていません'); return; }
-
-  const { minX, minY, maxX, maxY } = state.rectSelection;
-  const w = maxX - minX + 1;
-  const h = maxY - minY + 1;
-  const W = state.imgW;
-
-  const sourceData = workDataForExport();
-  const cropped = new Uint8ClampedArray(w * h * 4);
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const si = ((minY + y) * W + (minX + x)) * 4;
-      const di = (y * w + x) * 4;
-      cropped[di]     = sourceData[si];
-      cropped[di + 1] = sourceData[si + 1];
-      cropped[di + 2] = sourceData[si + 2];
-      cropped[di + 3] = sourceData[si + 3];
-    }
-  }
-  const out = document.createElement('canvas');
-  out.width = w;
-  out.height = h;
-  out.getContext('2d').putImageData(new ImageData(cropped, w, h), 0, 0);
-
-  const fmt = state.saveFormat || 'png';
-  const mime = `image/${fmt}`;
-  const ext = fmt === 'jpeg' ? 'jpg' : fmt;
-  const finish = blob => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const base = (state.filename || 'image').replace(/\.[^.]+$/, '');
-    a.download = `${base}_crop.${ext}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    showToast(`矩形を保存しました（${w}×${h}）`);
-  };
-  if (fmt === 'jpeg') {
-    const flat = document.createElement('canvas');
-    flat.width = w; flat.height = h;
-    const fctx = flat.getContext('2d');
-    fctx.fillStyle = '#ffffff';
-    fctx.fillRect(0, 0, w, h);
-    fctx.drawImage(out, 0, 0);
-    flat.toBlob(finish, mime, 0.92);
-  } else {
-    out.toBlob(finish, mime, fmt === 'webp' ? 0.92 : undefined);
-  }
-}
-
-// ============================================================================
 // Save
 // ============================================================================
-function getOpaqueBounds(data, W, H) {
-  let minX = W, minY = H, maxX = -1, maxY = -1;
-  for (let y = 0; y < H; y++) {
-    const rowBase = y * W;
-    for (let x = 0; x < W; x++) {
-      if (data[(rowBase + x) * 4 + 3] === 0) continue;
-      if (x < minX) minX = x;
-      if (y < minY) minY = y;
-      if (x > maxX) maxX = x;
-      if (y > maxY) maxY = y;
-    }
-  }
-  return maxX < 0 ? null : { minX, minY, maxX, maxY };
-}
-
-function saveAsPNG() {
+async function saveAsPNG() {
   if (!state.workData) return;
-
-  // Apply feather (if toggled on) once on the full canvas, then crop —
-  // this way the softened edge can extend a pixel or two beyond the
-  // pre-feather bounding box without being clipped off.
-  const sourceData = workDataForExport();
-
-  let outW, outH, outData;
-  if (state.preserveCanvas) {
-    outW = state.imgW;
-    outH = state.imgH;
-    outData = sourceData;
-  } else {
-    const b = getOpaqueBounds(sourceData, state.imgW, state.imgH);
-    if (!b) {
-      showError('保存できる内容がありません');
-      return;
-    }
-    outW = b.maxX - b.minX + 1;
-    outH = b.maxY - b.minY + 1;
-    outData = new Uint8ClampedArray(outW * outH * 4);
-    const W = state.imgW;
-    for (let y = 0; y < outH; y++) {
-      for (let x = 0; x < outW; x++) {
-        const si = ((b.minY + y) * W + (b.minX + x)) * 4;
-        const di = (y * outW + x) * 4;
-        outData[di]     = sourceData[si];
-        outData[di + 1] = sourceData[si + 1];
-        outData[di + 2] = sourceData[si + 2];
-        outData[di + 3] = sourceData[si + 3];
-      }
-    }
-  }
-
-  const out = document.createElement('canvas');
-  out.width = outW;
-  out.height = outH;
-  out.getContext('2d').putImageData(new ImageData(outData, outW, outH), 0, 0);
-  const fmt = state.saveFormat || 'png';
-  const mime = `image/${fmt}`;
-  const ext = fmt === 'jpeg' ? 'jpg' : fmt;
-  // For JPEG/WebP, flatten transparency onto white so the user gets a
-  // sensible export; PNG keeps alpha as-is.
-  if (fmt === 'jpeg') {
-    const flat = document.createElement('canvas');
-    flat.width = outW;
-    flat.height = outH;
-    const fctx = flat.getContext('2d');
-    fctx.fillStyle = '#ffffff';
-    fctx.fillRect(0, 0, outW, outH);
-    fctx.drawImage(out, 0, 0);
-    flat.toBlob(saveBlobAs, mime, 0.92);
-  } else {
-    out.toBlob(saveBlobAs, mime, fmt === 'webp' ? 0.92 : undefined);
-  }
-  function saveBlobAs(blob) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const base = (state.filename || 'image').replace(/\.[^.]+$/, '') || 'image';
-    a.download = `${base}_edited.${ext}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  try {
+    const { outW, outH } = await saveImage({
+      data: state.workData,
+      W: state.imgW,
+      H: state.imgH,
+      filename: state.filename || 'image',
+      format: state.saveFormat || 'png',
+      preserveCanvas: state.preserveCanvas,
+      featherActive: state.featherActive,
+      featherStrength: state.featherStrength,
+    });
     showToast(`保存しました（${outW}×${outH}）`);
+  } catch (err) {
+    showError(err.message || '保存に失敗しました');
   }
 }
 
