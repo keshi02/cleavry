@@ -19,6 +19,7 @@ import {
 import { saveImage } from './io/save';
 import { state } from './state';
 import { applyBrushDab, applyStroke } from './tools/brush';
+import { magicWandAt as runMagicWand, cancelWand, isWandRunning } from './tools/wand';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -451,15 +452,14 @@ const UNDO_KEY_THROTTLE_MS = 80;
 const brushKeyAccel = { lastTime: 0, lastDir: 0, runLength: 0 };
 
 // ============================================================================
-// Magic wand — async chunked BFS so the UI never freezes
+// Progress overlay — shared by magic wand and AI background removal.
 // ============================================================================
-let wandJob = null;        // current async job; cancellable via ESC
 const progressOverlay = $('progress-overlay');
 const progressFill    = $('progress-fill');
 const progressTitle   = $('progress-title');
 
 function showProgress(label) {
-  progressTitle.textContent = label || 'マジックワンド処理中…';
+  progressTitle.textContent = label || '処理中…';
   progressFill.style.width = '0%';
   progressOverlay.classList.add('show');
 }
@@ -470,167 +470,13 @@ function hideProgress() {
   progressOverlay.classList.remove('show');
 }
 
-function cancelWand() {
-  if (wandJob) wandJob.cancelled = true;
-}
-
+// Magic wand: thin glue. The BFS itself lives in tools/wand.ts; here we
+// just hand it the progress / redraw / autosave callbacks.
 function magicWandAt(ix, iy) {
-  if (!state.workData) return;
-  if (wandJob) return;     // ignore re-entry while one is running
-
-  // If the rect-select tool is the current tool but no rect has been
-  // drawn yet, the user has explicitly armed a scope without specifying
-  // it — don't quietly fall through to a full-canvas wand.
-  if (state.tool === 'rectSelect' && !state.rectSelection) return;
-
-  const px0 = Math.floor(ix), py0 = Math.floor(iy);
-  if (px0 < 0 || py0 < 0 || px0 >= state.imgW || py0 >= state.imgH) return;
-  const W = state.imgW, H = state.imgH;
-  const isRestore = state.tool === 'restoreWand';
-  // Restore-wand groups by *original* color (the source artwork). Erase-wand
-  // groups by *current* color so it can keep eating into a region after
-  // partial edits. Both share the same BFS skeleton.
-  const refData = isRestore ? state.origData : state.workData;
-  const startIdx = (py0 * W + px0) * 4;
-  if (isRestore && refData[startIdx + 3] === 0) {
-    // No source pixel here — nothing to restore.
-    return;
-  }
-  // Erase-wand on an already-transparent pixel is a no-op (and would
-  // expand into the rest of the transparent region by color match,
-  // which is never useful). Bail out silently.
-  if (!isRestore && state.workData[startIdx + 3] === 0) {
-    return;
-  }
-  // Respect any rect-selection: bail if the seed point is outside the
-  // allowed region. The BFS itself will also be confined by rectAllows
-  // when it queues neighbours.
-  if (!rectAllows(px0, py0)) {
-    return;
-  }
-  const r0 = refData[startIdx];
-  const g0 = refData[startIdx + 1];
-  const b0 = refData[startIdx + 2];
-  const tolMax = (state.tolerance / 100) * 441;
-  const tolMax2 = tolMax * tolMax;
-
-  // Capture the rect-restriction once so the hot BFS loop can inline the
-  // bounds check without repeated property lookups.
-  const _rect = state.rectSelection;
-  const hasRect = !!_rect;
-  const rInv = state.rectInverse;
-  const rMinX = hasRect ? _rect.minX : 0;
-  const rMinY = hasRect ? _rect.minY : 0;
-  const rMaxX = hasRect ? _rect.maxX : 0;
-  const rMaxY = hasRect ? _rect.maxY : 0;
-
-  // Snapshot for undo BEFORE mutating, and keep it locally so we can roll
-  // back on cancel without polluting redo stack.
-  const snapshot = new Uint8ClampedArray(state.workData);
-
-  const visited = new Uint8Array(W * H);
-  // visited-at-push means each pixel enters the stack at most once → W*H entries
-  // (each entry = 2 slots for x,y) is the exact upper bound. No overflow.
-  const stack = new Int32Array(W * H * 2);
-  let sp = 0;
-  stack[sp++] = px0;
-  stack[sp++] = py0;
-  visited[py0 * W + px0] = 1;
-
-  const totalPixels = W * H;
-  let processedPixels = 0;
-
-  const job = { cancelled: false };
-  wandJob = job;
-  showProgress(isRestore ? '復元ワンド処理中…' : 'マジックワンド処理中…');
-
-  function step() {
-    if (job.cancelled) {
-      // Roll back: restore the pre-wand snapshot
-      state.workData = snapshot;
-      redraw();
-      hideProgress();
-      wandJob = null;
-      return;
-    }
-
-    const startTime = performance.now();
-    const FRAME_BUDGET_MS = 14;   // leave room for redraw + browser
-
-    // Localise hot-loop refs for speed
-    const data = state.workData;
-    const orig = state.origData;
-    while (sp > 0 && performance.now() - startTime < FRAME_BUDGET_MS) {
-      const y = stack[--sp];
-      const x = stack[--sp];
-      const pi = y * W + x;
-      const di = pi * 4;
-      // For restore-wand, transparent source pixels can't match — skip them
-      // before the (cheap) color test so we don't bleed into empty areas.
-      if (isRestore && refData[di + 3] === 0) continue;
-      const dr = refData[di]     - r0;
-      const dg = refData[di + 1] - g0;
-      const db = refData[di + 2] - b0;
-      if (dr*dr + dg*dg + db*db > tolMax2) continue;
-      if (isRestore) {
-        data[di]     = orig[di];
-        data[di + 1] = orig[di + 1];
-        data[di + 2] = orig[di + 2];
-        data[di + 3] = orig[di + 3];
-      } else {
-        data[di + 3] = 0;
-      }
-      processedPixels++;
-
-      if (x + 1 < W) {
-        const ni = pi + 1;
-        if (!visited[ni] && (!hasRect || (rInv ? !(x + 1 >= rMinX && x + 1 <= rMaxX && y >= rMinY && y <= rMaxY) : (x + 1 >= rMinX && x + 1 <= rMaxX && y >= rMinY && y <= rMaxY)))) {
-          visited[ni] = 1; stack[sp++] = x + 1; stack[sp++] = y;
-        }
-      }
-      if (x > 0) {
-        const ni = pi - 1;
-        if (!visited[ni] && (!hasRect || (rInv ? !(x - 1 >= rMinX && x - 1 <= rMaxX && y >= rMinY && y <= rMaxY) : (x - 1 >= rMinX && x - 1 <= rMaxX && y >= rMinY && y <= rMaxY)))) {
-          visited[ni] = 1; stack[sp++] = x - 1; stack[sp++] = y;
-        }
-      }
-      if (y + 1 < H) {
-        const ni = pi + W;
-        if (!visited[ni] && (!hasRect || (rInv ? !(x >= rMinX && x <= rMaxX && y + 1 >= rMinY && y + 1 <= rMaxY) : (x >= rMinX && x <= rMaxX && y + 1 >= rMinY && y + 1 <= rMaxY)))) {
-          visited[ni] = 1; stack[sp++] = x;     stack[sp++] = y + 1;
-        }
-      }
-      if (y > 0) {
-        const ni = pi - W;
-        if (!visited[ni] && (!hasRect || (rInv ? !(x >= rMinX && x <= rMaxX && y - 1 >= rMinY && y - 1 <= rMaxY) : (x >= rMinX && x <= rMaxX && y - 1 >= rMinY && y - 1 <= rMaxY)))) {
-          visited[ni] = 1; stack[sp++] = x;     stack[sp++] = y - 1;
-        }
-      }
-    }
-
-    // Progress: roughly fraction of stack processed vs max possible
-    updateProgress(Math.min(99, (processedPixels / totalPixels) * 100));
-    redraw();
-
-    if (sp === 0) {
-      // Done — commit to undo stack via standard path. We push the
-      // *snapshot* (pre-wand state) directly instead of calling
-      // pushUndo(), because pushUndo() would snapshot the *current*
-      // (post-wand) workData and undo wouldn't have anywhere to roll
-      // back to. We still need to fire scheduleAutosave() ourselves
-      // since we bypassed pushUndo's normal autosave hook.
-      state.undo.push(snapshot);
-      if (state.undo.length > state.maxUndo) state.undo.shift();
-      state.redo = [];
-      hideProgress();
-      wandJob = null;
-      updateStatus();
-      scheduleAutosave();
-      return;
-    }
-    requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
+  runMagicWand(ix, iy, {
+    showProgress, updateProgress, hideProgress,
+    redraw, updateStatus, scheduleAutosave,
+  });
 }
 
 // ============================================================================
@@ -1005,7 +851,7 @@ function updateSeparateInfo() {
 async function startSeparateMode() {
   if (!state.workData) return;
   if (state.separateMode || state.cleanupMode) return;
-  if (wandJob) return;
+  if (isWandRunning()) return;
 
   showProgress('要素を検出中…');
   // Yield once so the overlay renders before the synchronous BFS.
@@ -1164,7 +1010,7 @@ async function saveSelectedComponents() {
 async function startCleanupMode() {
   if (!state.workData) return;
   if (state.separateMode || state.cleanupMode) return;
-  if (wandJob) return;
+  if (isWandRunning()) return;
 
   showProgress('要素を検出中…');
   await new Promise(r => setTimeout(r, 30));
@@ -1265,7 +1111,7 @@ function executeCleanup() {
 async function runAutoCleanup() {
   if (!state.workData) return;
   if (state.separateMode || state.cleanupMode) return;
-  if (wandJob) return;
+  if (isWandRunning()) return;
 
   showProgress('ノイズ成分を検出中…');
   await new Promise(r => setTimeout(r, 30));
@@ -1319,7 +1165,7 @@ async function runAutoCleanup() {
 async function runAIBackgroundRemoval() {
   if (!state.workData) return;
   if (bgRemovalRunning) return;
-  if (wandJob) return;
+  if (isWandRunning()) return;
   if (state.separateMode || state.cleanupMode) return;
 
   bgRemovalRunning = true;
@@ -1848,7 +1694,7 @@ function bindKeys() {
     // ESC: cancel running wand → exit component-picking mode → clear rect
     // selection → close help
     if (e.key === 'Escape') {
-      if (wandJob) { e.preventDefault(); cancelWand(); return; }
+      if (isWandRunning()) { e.preventDefault(); cancelWand(); return; }
       if (state.separateMode) { e.preventDefault(); exitSeparateMode(); return; }
       if (state.cleanupMode) { e.preventDefault(); exitCleanupMode(); return; }
       if (state.rectSelection) { e.preventDefault(); clearRectSelection(); return; }
