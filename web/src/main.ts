@@ -1246,8 +1246,12 @@ function bindUI() {
   // Release focus once the user finishes adjusting a slider, otherwise the
   // bindKeys guard (which ignores keys while an INPUT has focus) keeps Cmd+Z
   // and Space silently routed into the slider until the canvas is clicked.
+  // `change` only fires when the value actually moves — clicks without
+  // drag would leave focus stuck. `pointerup` catches that case too.
   ['size-slider', 'hardness-slider', 'tolerance-slider'].forEach(id => {
-    $(id).addEventListener('change', e => e.target.blur());
+    const el = $(id);
+    el.addEventListener('change',    e => (e.target as HTMLElement).blur());
+    el.addEventListener('pointerup', e => (e.target as HTMLElement).blur());
   });
   $('tolerance-toggle').onchange = e => {
     state.toleranceOn = e.target.checked;
