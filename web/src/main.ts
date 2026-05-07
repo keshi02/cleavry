@@ -23,6 +23,7 @@ import { magicWandAt as runMagicWand, cancelWand, isWandRunning } from './tools/
 import { detectComponents, SEPARATE_MIN_AREA } from './components/connected';
 import { showProgress, updateProgress, hideProgress, setProgressTitle } from './ui/progress';
 import { showError } from './ui/error';
+import { initHistory, pushUndo, undo, redoFn } from './persist/history';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -402,35 +403,6 @@ function clearFeatherToggle() {
   $('feather-btn').classList.remove('active');
 }
 
-function pushUndo() {
-  state.undo.push(new Uint8ClampedArray(state.workData));
-  if (state.undo.length > state.maxUndo) state.undo.shift();
-  state.redo = [];
-  updateStatus();
-  scheduleAutosave();
-}
-
-function undo() {
-  if (state.undo.length === 0) return;
-  if (state.separateMode) exitSeparateMode();  // mask becomes stale
-  if (state.cleanupMode) exitCleanupMode();
-  state.redo.push(new Uint8ClampedArray(state.workData));
-  state.workData = state.undo.pop();
-  redraw();
-  updateStatus();
-  scheduleAutosave();
-}
-
-function redoFn() {
-  if (state.redo.length === 0) return;
-  if (state.separateMode) exitSeparateMode();
-  if (state.cleanupMode) exitCleanupMode();
-  state.undo.push(new Uint8ClampedArray(state.workData));
-  state.workData = state.redo.pop();
-  redraw();
-  updateStatus();
-  scheduleAutosave();
-}
 
 // True while AI background removal is in flight. Used by updateStatus()
 // to disable the AI button so the user can't double-fire it.
@@ -1749,6 +1721,10 @@ window.addEventListener('paste', e => {
     }
   }
 });
+
+// Wire history hooks first so any push/undo triggered by other init
+// (e.g. autosave restore) sees the application's redraw / status / etc.
+initHistory({ redraw, updateStatus, scheduleAutosave, exitSeparateMode, exitCleanupMode });
 
 bindUI();
 bindCanvas();
