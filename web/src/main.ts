@@ -266,6 +266,9 @@ function loadImageFromFile(file) {
     redraw();
     updateStatus();
     URL.revokeObjectURL(img.src);
+    // Persist immediately so a freshly-loaded image survives a reload
+    // even before the user has touched it.
+    scheduleAutosave();
   };
   img.onerror = () => showError('画像の読み込みに失敗しました');
   img.src = URL.createObjectURL(file);
@@ -541,6 +544,7 @@ function undo() {
   state.workData = state.undo.pop();
   redraw();
   updateStatus();
+  scheduleAutosave();
 }
 
 function redoFn() {
@@ -551,6 +555,7 @@ function redoFn() {
   state.workData = state.redo.pop();
   redraw();
   updateStatus();
+  scheduleAutosave();
 }
 
 // ============================================================================
@@ -815,14 +820,19 @@ function magicWandAt(ix, iy) {
     redraw();
 
     if (sp === 0) {
-      // Done — commit to undo stack via standard path
-      // (push the *snapshot* so user can undo back to it)
+      // Done — commit to undo stack via standard path. We push the
+      // *snapshot* (pre-wand state) directly instead of calling
+      // pushUndo(), because pushUndo() would snapshot the *current*
+      // (post-wand) workData and undo wouldn't have anywhere to roll
+      // back to. We still need to fire scheduleAutosave() ourselves
+      // since we bypassed pushUndo's normal autosave hook.
       state.undo.push(snapshot);
       if (state.undo.length > state.maxUndo) state.undo.shift();
       state.redo = [];
       hideProgress();
       wandJob = null;
       updateStatus();
+      scheduleAutosave();
       return;
     }
     requestAnimationFrame(step);
@@ -2040,24 +2050,34 @@ function updateRectControlsVisibility() {
 // ============================================================================
 let dragCounter = 0;
 function setupDragDrop() {
+  // The browser's default action for a file drop is to navigate to the
+  // file (i.e. open the image in the tab, blowing away our app). We
+  // have to preventDefault on dragover at the *document* level — if it
+  // only fires on #workspace, the browser still grabs drops that land
+  // anywhere else on the page, and we never see them.
+  document.addEventListener('dragover', e => e.preventDefault());
+
+  // Visual overlay: only light up when the drag is over the canvas area.
   workspace.addEventListener('dragenter', e => {
     e.preventDefault();
     dragCounter++;
     if (dragCounter === 1) dropOverlay.classList.add('show');
   });
-  workspace.addEventListener('dragleave', e => {
+  workspace.addEventListener('dragleave', () => {
     dragCounter--;
     if (dragCounter <= 0) {
       dragCounter = 0;
       dropOverlay.classList.remove('show');
     }
   });
-  workspace.addEventListener('dragover', e => e.preventDefault());
-  workspace.addEventListener('drop', e => {
+
+  // Accept drops anywhere on the page. Restricting to #workspace meant
+  // the user had to aim precisely; document-level is much more forgiving.
+  document.addEventListener('drop', e => {
     e.preventDefault();
     dragCounter = 0;
     dropOverlay.classList.remove('show');
-    const files = Array.from(e.dataTransfer.files || []);
+    const files = Array.from(e.dataTransfer?.files || []);
     if (files.length === 0) return;
     if (files.length > 1) {
       showToast(`${files.length} 枚のうち最初の 1 枚を読み込みます`);
