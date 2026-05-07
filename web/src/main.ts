@@ -18,6 +18,7 @@ import {
 } from './ui/originalOverlay';
 import { saveImage } from './io/save';
 import { state } from './state';
+import { applyBrushDab, applyStroke } from './tools/brush';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -434,88 +435,6 @@ function redoFn() {
   redraw();
   updateStatus();
   scheduleAutosave();
-}
-
-// ============================================================================
-// Brush — apply at a single point
-// ============================================================================
-function colorMatches(idx, refR, refG, refB) {
-  const dr = state.workData[idx]   - refR;
-  const dg = state.workData[idx+1] - refG;
-  const db = state.workData[idx+2] - refB;
-  const d2 = dr * dr + dg * dg + db * db;
-  // Tolerance percent of max possible distance (~441)
-  const max = (state.tolerance / 100) * 441;
-  return d2 <= max * max;
-}
-
-function applyBrushDab(cx, cy, sampleColor) {
-  const r = state.brushSize;
-  const r2 = r * r;
-  const hardness = state.brushHardness / 100;
-  const innerR = r * hardness;          // fully-applied radius
-  const featherSpan = r - innerR;       // falloff zone
-
-  const x0 = Math.max(0, Math.floor(cx - r));
-  const y0 = Math.max(0, Math.floor(cy - r));
-  const x1 = Math.min(state.imgW - 1, Math.ceil(cx + r));
-  const y1 = Math.min(state.imgH - 1, Math.ceil(cy + r));
-
-  const data = state.workData;
-  const orig = state.origData;
-  const W = state.imgW;
-  const isErase = state.tool === 'erase';
-  const useTol = state.toleranceOn && sampleColor;
-
-  for (let py = y0; py <= y1; py++) {
-    const dy = py - cy;
-    for (let px = x0; px <= x1; px++) {
-      const dx = px - cx;
-      const dist2 = dx*dx + dy*dy;
-      if (dist2 > r2) continue;
-      const dist = Math.sqrt(dist2);
-      let factor;
-      if (dist <= innerR) {
-        factor = 1;
-      } else if (featherSpan > 0) {
-        const t = (dist - innerR) / featherSpan;
-        // Smooth cosine falloff: nicer than linear
-        factor = 0.5 + 0.5 * Math.cos(t * Math.PI);
-      } else {
-        factor = 0;
-      }
-      const idx = (py * W + px) * 4;
-      if (useTol) {
-        if (!colorMatches(idx, sampleColor.r, sampleColor.g, sampleColor.b)) continue;
-      }
-      if (isErase) {
-        const oldA = data[idx + 3];
-        const newA = oldA * (1 - factor);
-        if (newA < oldA) data[idx + 3] = newA | 0;
-      } else {
-        // restore — lerp toward original RGBA
-        for (let k = 0; k < 4; k++) {
-          const od = data[idx + k];
-          const og = orig[idx + k];
-          data[idx + k] = (od + (og - od) * factor) | 0;
-        }
-      }
-    }
-  }
-}
-
-// ============================================================================
-// Stroke — interpolate between two points
-// ============================================================================
-function applyStroke(x0, y0, x1, y1, sampleColor) {
-  const dx = x1 - x0, dy = y1 - y0;
-  const dist = Math.sqrt(dx*dx + dy*dy);
-  const stepSize = Math.max(0.5, state.brushSize * 0.25);
-  const steps = Math.max(1, Math.ceil(dist / stepSize));
-  for (let i = 1; i <= steps; i++) {
-    const t = i / steps;
-    applyBrushDab(x0 + dx*t, y0 + dy*t, sampleColor);
-  }
 }
 
 // True while AI background removal is in flight. Used by updateStatus()
