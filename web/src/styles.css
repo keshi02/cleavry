@@ -109,6 +109,12 @@
     border-right: 1px solid var(--border);
   }
   .group:last-child { border-right: none; }
+  /* Force a line break in the wrapping flex toolbar. Insert <div class="row-break"></div>
+     wherever the next .group should start a new visual row. */
+  .row-break {
+    flex-basis: 100%;
+    height: 0;
+  }
   .group label {
     font-size: 11px;
     color: var(--muted);
