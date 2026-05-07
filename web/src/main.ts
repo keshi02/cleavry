@@ -5,6 +5,8 @@
 // refactor (Phase B) can split this monolith and add real types.
 
 import { clamp } from './utils/clamp';
+import { $, isOverlayActive } from './utils/dom';
+import { isMac } from './utils/platform';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -67,7 +69,6 @@ try {
 // ============================================================================
 // DOM
 // ============================================================================
-const $ = id => document.getElementById(id);
 const workspace = $('workspace');
 const canvasWrap = $('canvas-wrap');
 const canvas = $('canvas');
@@ -84,16 +85,6 @@ const rectOverlayCtx = rectOverlay.getContext('2d');
 // ============================================================================
 // Helpers
 // ============================================================================
-function isMac() { return /Mac/.test(navigator.platform); }
-
-// True when an overlay UI (help, custom modal) is on top of the canvas.
-// Used to short-circuit canvas-level inputs (wheel zoom, hot-key
-// shortcuts) so they don't fire through the overlay.
-function isOverlayActive() {
-  return $('help-overlay').classList.contains('show')
-    || !!document.querySelector('.app-modal-overlay');
-}
-
 function showError(msg) {
   // Fire-and-forget — caller doesn't need to await dismissal.
   showModal({
