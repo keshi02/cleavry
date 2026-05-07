@@ -4,6 +4,8 @@
 // Type strictness is intentionally off-by-default until the per-section
 // refactor (Phase B) can split this monolith and add real types.
 
+import { clamp } from './utils/clamp';
+
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
 // loaded dynamically inside the AI background-removal flow.
@@ -82,8 +84,6 @@ const rectOverlayCtx = rectOverlay.getContext('2d');
 // ============================================================================
 // Helpers
 // ============================================================================
-function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
-
 function isMac() { return /Mac/.test(navigator.platform); }
 
 // True when an overlay UI (help, custom modal) is on top of the canvas.
