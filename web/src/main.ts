@@ -17,63 +17,12 @@ import {
   setOriginalOverlayOpacity,
 } from './ui/originalOverlay';
 import { saveImage } from './io/save';
+import { state } from './state';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
 // loaded dynamically inside the AI background-removal flow.
 declare const JSZip: any;
-
-// ============================================================================
-// State
-// ============================================================================
-const state = {
-  origData: null,         // Uint8ClampedArray (RGBA), unmodified source
-  workData: null,         // Uint8ClampedArray (RGBA), being edited
-  imgW: 0,
-  imgH: 0,
-  filename: '',
-  tool: 'erase',          // 'erase' | 'restore' | 'wand' | 'restoreWand' | 'rectSelect'
-  lastWandTool: 'wand',   // remembers last picked wand variant — keeps it
-                          //   highlighted while user is in rect-select mode
-  rectSelection: null,    // { minX, minY, maxX, maxY } in image coords
-  rectInverse: false,     // false: wand acts inside rect; true: outside
-  rectDragStart: null,    // {x, y} during a rect-select drag
-  pendingWandClick: null, // {x, y} held while a wand-tool press could
-                          //   still turn into a drag (rect rebuild) instead
-  brushSize: 40,
-  brushHardness: 70,      // 0..100
-  toleranceOn: false,
-  tolerance: 20,          // 0..100, percent
-  undo: [],
-  redo: [],
-  maxUndo: 50,
-  zoom: 1,
-  panX: 0,
-  panY: 0,
-  isDrawing: false,
-  isPanning: false,
-  spaceHeld: false,
-  lastImgX: null,
-  lastImgY: null,
-  panStartScreen: null,
-  panStartPos: null,
-  strokeSnapshotTaken: false,
-  smoothPoints: [],
-  separateMode: false,
-  cleanupMode: false,     // selecting connected components to keep / discard
-  components: [],         // [{id, minX, minY, maxX, maxY, area, selected}]
-  componentMask: null,    // Uint32Array (W*H), 0 = 背景, 1+ = 成分ID
-  preserveCanvas: true,   // saves keep the original canvas size & pixel positions
-  featherActive: false,   // export-time feather flag (does not mutate workData)
-  featherStrength: 1,     // feather iterations: 1px / 2px / 3px
-  autoCleanupThreshold: 16, // default px² for one-shot auto-cleanup
-  saveFormat: 'png',      // 'png' | 'webp' | 'jpeg'
-  autoSaveEnabled: true,  // overridden from localStorage on init
-};
-try {
-  const v = localStorage.getItem('autosave-enabled');
-  if (v === 'false') state.autoSaveEnabled = false;
-} catch (_) {}
 
 // ============================================================================
 // DOM
