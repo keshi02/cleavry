@@ -10,6 +10,7 @@ import { isMac } from './utils/platform';
 import { showToast } from './ui/toast';
 import { initTheme, cycleTheme } from './ui/theme';
 import { showModal } from './ui/modal';
+import { saveSession, loadSession, clearSession } from './persist/autosave';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -2162,105 +2163,67 @@ function bindUI() {
 }
 
 // ============================================================================
-// Autosave to IndexedDB.
-//
-// On every notable workData change (debounced) we serialize the current
-// editing session into IndexedDB so the user can pick up where they left
-// off after a crash / tab close. We store the *raw bytes* (origData,
-// workData) rather than re-encoding to PNG every time — encode is slow,
-// and IDB blobs are fine for ~hundred MB scale.
+// Autosave: capture the current editing session into IndexedDB after a
+// debounce, and offer to restore it on next load. IO is in
+// persist/autosave.ts; this layer is purely state ↔ session glue.
 // ============================================================================
-const AUTOSAVE_DB = 'eraser-autosave';
-const AUTOSAVE_STORE = 'sessions';
-const AUTOSAVE_KEY = 'current';
 let autosaveTimer = null;
-
-function openAutosaveDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(AUTOSAVE_DB, 1);
-    req.onupgradeneeded = () => {
-      req.result.createObjectStore(AUTOSAVE_STORE);
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror   = () => reject(req.error);
-  });
-}
 
 async function autosaveNow() {
   if (!state.workData || !state.origData) return;
-  try {
-    const db = await openAutosaveDB();
-    const tx = db.transaction(AUTOSAVE_STORE, 'readwrite');
-    tx.objectStore(AUTOSAVE_STORE).put({
-      filename: state.filename || 'untitled',
-      imgW: state.imgW,
-      imgH: state.imgH,
-      origData: state.origData.buffer.slice(0),
-      workData: state.workData.buffer.slice(0),
-      savedAt: Date.now(),
-    }, AUTOSAVE_KEY);
-    tx.oncomplete = () => db.close();
-    tx.onerror = () => db.close();
-  } catch (_) { /* best effort */ }
+  await saveSession({
+    filename: state.filename || 'untitled',
+    imgW: state.imgW,
+    imgH: state.imgH,
+    origData: state.origData.buffer.slice(0),
+    workData: state.workData.buffer.slice(0),
+    savedAt: Date.now(),
+  });
 }
 
 function scheduleAutosave() {
   if (!state.autoSaveEnabled) return;
-  clearTimeout(autosaveTimer);
+  if (autosaveTimer !== null) clearTimeout(autosaveTimer);
   autosaveTimer = setTimeout(autosaveNow, 1500);
 }
 
 async function tryRestoreAutosave() {
   if (!state.autoSaveEnabled) return;
-  try {
-    const db = await openAutosaveDB();
-    const session = await new Promise((resolve, reject) => {
-      const tx = db.transaction(AUTOSAVE_STORE, 'readonly');
-      const req = tx.objectStore(AUTOSAVE_STORE).get(AUTOSAVE_KEY);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror   = () => reject(req.error);
-    });
-    db.close();
-    if (!session || !session.imgW) return;
-    const ageMin = Math.round((Date.now() - session.savedAt) / 60000);
-    const ok = await showModal({
-      title: '前回のセッションを復元しますか？',
-      message:
-        `ファイル: ${session.filename}\n` +
-        `サイズ: ${session.imgW} × ${session.imgH}\n` +
-        `保存時刻: ${ageMin} 分前`,
-      buttons: [
-        { label: '復元する', value: true, primary: true },
-        { label: '破棄する', value: false },
-      ],
-    });
-    if (!ok) { clearAutosave(); return; }
+  const session = await loadSession();
+  if (!session || !session.imgW) return;
+  const ageMin = Math.round((Date.now() - session.savedAt) / 60000);
+  const ok = await showModal({
+    title: '前回のセッションを復元しますか？',
+    message:
+      `ファイル: ${session.filename}\n` +
+      `サイズ: ${session.imgW} × ${session.imgH}\n` +
+      `保存時刻: ${ageMin} 分前`,
+    buttons: [
+      { label: '復元する', value: true, primary: true },
+      { label: '破棄する', value: false },
+    ],
+  });
+  if (!ok) { clearAutosave(); return; }
 
-    state.imgW = session.imgW;
-    state.imgH = session.imgH;
-    state.filename = session.filename;
-    state.origData = new Uint8ClampedArray(session.origData);
-    state.workData = new Uint8ClampedArray(session.workData);
-    state.undo = []; state.redo = [];
-    canvas.width = state.imgW;
-    canvas.height = state.imgH;
-    emptyHint.style.display = 'none';
-    $('filename-status').textContent = state.filename;
-    setTool('erase');
-    fitToScreen();
-    redraw();
-    updateStatus();
-    showToast('前回のセッションを復元しました');
-  } catch (_) { /* best effort */ }
+  state.imgW = session.imgW;
+  state.imgH = session.imgH;
+  state.filename = session.filename;
+  state.origData = new Uint8ClampedArray(session.origData);
+  state.workData = new Uint8ClampedArray(session.workData);
+  state.undo = []; state.redo = [];
+  canvas.width = state.imgW;
+  canvas.height = state.imgH;
+  emptyHint.style.display = 'none';
+  $('filename-status').textContent = state.filename;
+  setTool('erase');
+  fitToScreen();
+  redraw();
+  updateStatus();
+  showToast('前回のセッションを復元しました');
 }
 
 async function clearAutosave() {
-  try {
-    const db = await openAutosaveDB();
-    const tx = db.transaction(AUTOSAVE_STORE, 'readwrite');
-    tx.objectStore(AUTOSAVE_STORE).delete(AUTOSAVE_KEY);
-    tx.oncomplete = () => db.close();
-  } catch (_) {}
+  await clearSession();
 }
 
 // Drop any in-flight gesture state. Called when the window loses focus or the
