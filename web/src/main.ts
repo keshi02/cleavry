@@ -11,6 +11,7 @@ import { showToast } from './ui/toast';
 import { initTheme, cycleTheme } from './ui/theme';
 import { showModal } from './ui/modal';
 import { saveSession, loadSession, clearSession } from './persist/autosave';
+import { segmentBackground } from './ai/background';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -563,10 +564,8 @@ function applyStroke(x0, y0, x1, y1, sampleColor) {
   }
 }
 
-// AI background removal — module-level cache. Loaded lazily on first
-// invocation (see runAIBackgroundRemoval below) and cached via the
-// browser, so subsequent runs are instant.
-let bgRemovalModule = null;
+// True while AI background removal is in flight. Used by updateStatus()
+// to disable the AI button so the user can't double-fire it.
 let bgRemovalRunning = false;
 
 // Cmd+Z / Cmd+Shift+Z auto-repeat governor (~12 ops/sec).
@@ -1438,66 +1437,12 @@ async function runAutoCleanup() {
 }
 
 // ============================================================================
-// AI background removal — runs entirely in the browser. origData (source
-// with background) is preserved so the restore brush / restore wand can
-// paint back anything the model shaved off too aggressively. Undoable in
-// one step.
-//
-// Stack: transformers.js v4 (`@huggingface/transformers`) driving
-// AutoModel / AutoProcessor directly, against
-// `onnx-community/BiRefNet_512x512-ONNX` at fp16 on WebGPU.
-//
-// Why 512×512 and fp16/WebGPU: the 1024-input model breaks
-// onnxruntime-web's WebGPU shader-buffer ceiling, and fp32 weights OOM
-// the WASM 4 GB heap. fp16 + WebGPU sidesteps both by moving tensors to
-// the GPU and shrinking weights to ~115 MB.
-//
-// Output is raw logits — apply .sigmoid() before scaling to uint8.
+// AI background removal glue. Inference lives in ai/background.ts —
+// here we just manage UI state (progress overlay, button disabling),
+// shuttle the canvas image data in, and write the alpha mask back into
+// workData so the restore brush / restore wand can recover anything
+// the model shaved off too aggressively. Undoable in one step.
 // ============================================================================
-let bgSegmenter = null;
-const TRANSFORMERS_VERSION = '4.2.0';
-const BG_MODEL_ID = 'onnx-community/BiRefNet_512x512-ONNX';
-
-async function loadBgRemovalModule() {
-  if (bgRemovalModule) return bgRemovalModule;
-  bgRemovalModule = await import(
-    /* @vite-ignore */
-    `https://cdn.jsdelivr.net/npm/@huggingface/transformers@${TRANSFORMERS_VERSION}`
-  );
-  bgRemovalModule.env.allowLocalModels = false;
-  bgRemovalModule.env.allowRemoteModels = true;
-  return bgRemovalModule;
-}
-
-async function getBgSegmenter(progressCallback) {
-  if (bgSegmenter) return bgSegmenter;
-  const mod = await loadBgRemovalModule();
-  const { AutoModel, AutoProcessor, RawImage } = mod;
-  const hasWebGPU = typeof navigator !== 'undefined'
-    && typeof navigator.gpu !== 'undefined';
-  if (!hasWebGPU) {
-    throw new Error(
-      'AI 背景除去には WebGPU 対応ブラウザが必要です。' +
-      'Chrome / Edge / Firefox（最新版）でお試しください。' +
-      'Safari は現状非対応です。'
-    );
-  }
-
-  // device: 'webgpu' with WASM auto-fallback. dtype: 'fp16' picks up the
-  // ~94MB quantised weights (vs 183MB fp32) — the model card lists fp16
-  // as the default and the studioludens build is verified to work in fp16.
-  const model = await AutoModel.from_pretrained(BG_MODEL_ID, {
-    dtype: 'fp16',
-    device: 'webgpu',
-    progress_callback: progressCallback,
-  });
-  const processor = await AutoProcessor.from_pretrained(BG_MODEL_ID, {
-    progress_callback: progressCallback,
-  });
-  bgSegmenter = { model, processor, RawImage };
-  return bgSegmenter;
-}
-
 async function runAIBackgroundRemoval() {
   if (!state.workData) return;
   if (bgRemovalRunning) return;
@@ -1509,17 +1454,7 @@ async function runAIBackgroundRemoval() {
   showProgress('AI モデルを準備中…（初回は ~100MB のダウンロード）');
 
   try {
-    const { model, processor, RawImage } = await getBgSegmenter(data => {
-      if (!data) return;
-      if (data.status === 'progress' && typeof data.progress === 'number') {
-        progressTitle.textContent = 'AI モデルを取得中…';
-        updateProgress(Math.min(99, data.progress));
-      } else if (data.status === 'ready' || data.status === 'done') {
-        progressTitle.textContent = 'AI を準備中…';
-      }
-    });
-
-    // workData → data-URL (RawImage.fromURL handles both PNG and Blob URLs).
+    // workData → data-URL so transformers.js can decode it via fetch.
     const tmp = document.createElement('canvas');
     tmp.width = state.imgW;
     tmp.height = state.imgH;
@@ -1528,61 +1463,23 @@ async function runAIBackgroundRemoval() {
     );
     const dataURL = tmp.toDataURL('image/png');
 
-    progressTitle.textContent = 'AI で背景除去中…';
-    updateProgress(0);
-
-    const image = await RawImage.fromURL(dataURL);
-    const { pixel_values } = await processor(image);
-    const modelOut = await model({ input_image: pixel_values });
-
-    let maskTensor = modelOut.logits
-      ?? modelOut.output_image
-      ?? modelOut.output
-      ?? null;
-    if (!maskTensor) {
-      const vals = Object.values(modelOut).filter(v => v && typeof v.sigmoid === 'function');
-      maskTensor = vals[vals.length - 1];
-    }
-    if (!maskTensor) throw new Error('AI モデルの出力形式を解釈できませんでした');
-
-    const lowMask = await RawImage.fromTensor(
-      maskTensor[0].sigmoid().mul(255).to('uint8')
-    );
-
-    progressTitle.textContent = '結果を反映中…';
-    updateProgress(99);
-
-    const lowW = lowMask.width;
-    const lowH = lowMask.height;
-    const lowCanvas = document.createElement('canvas');
-    lowCanvas.width = lowW;
-    lowCanvas.height = lowH;
-    const lowCtx = lowCanvas.getContext('2d');
-    const lowImg = lowCtx.createImageData(lowW, lowH);
-    for (let i = 0; i < lowW * lowH; i++) {
-      const v = lowMask.data[i] | 0;
-      lowImg.data[i * 4]     = v;
-      lowImg.data[i * 4 + 1] = v;
-      lowImg.data[i * 4 + 2] = v;
-      lowImg.data[i * 4 + 3] = 255;
-    }
-    lowCtx.putImageData(lowImg, 0, 0);
-
-    const hiCanvas = document.createElement('canvas');
-    hiCanvas.width = state.imgW;
-    hiCanvas.height = state.imgH;
-    const hiCtx = hiCanvas.getContext('2d');
-    hiCtx.imageSmoothingEnabled = true;
-    hiCtx.imageSmoothingQuality = 'high';
-    hiCtx.drawImage(lowCanvas, 0, 0, state.imgW, state.imgH);
-    const hiData = hiCtx.getImageData(0, 0, state.imgW, state.imgH).data;
+    const alphaMask = await segmentBackground(dataURL, state.imgW, state.imgH, e => {
+      const titles = {
+        'model-fetch': 'AI モデルを取得中…',
+        'preparing':   'AI を準備中…',
+        'inferring':   'AI で背景除去中…',
+        'finalizing':  '結果を反映中…',
+      };
+      progressTitle.textContent = titles[e.phase];
+      updateProgress(Math.min(99, e.progress));
+    });
 
     if (state.separateMode) exitSeparateMode();
     if (state.cleanupMode) exitCleanupMode();
     pushUndo();
     const N = state.imgW * state.imgH;
     for (let i = 0; i < N; i++) {
-      state.workData[i * 4 + 3] = hiData[i * 4];
+      state.workData[i * 4 + 3] = alphaMask[i];
     }
     redraw();
     hideProgress();
