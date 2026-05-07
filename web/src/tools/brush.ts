@@ -1,6 +1,6 @@
 // Brush — paint a single dab (applyBrushDab) or interpolate dabs along
 // a line (applyStroke). Reads state directly: brushSize, brushHardness,
-// tolerance, current tool, workData / origData. Writes into workData.
+// current tool, workData / origData. Writes into workData.
 //
 // Two modes:
 //   - erase  : reduces alpha by `factor` (factor = 1 inside the hard
@@ -8,25 +8,12 @@
 //              between)
 //   - restore: lerps RGBA toward origData by `factor`
 //
-// Optional color tolerance: skip pixels that don't match `sampleColor`
-// within the tolerance threshold. The sample is captured once at stroke
-// start so a moving brush respects the original target color.
+// Color tolerance is a wand-only feature; the brush always paints
+// every pixel inside its radius regardless of color.
 
 import { state } from '../state';
 
-interface SampleColor { r: number; g: number; b: number }
-
-function colorMatches(idx: number, refR: number, refG: number, refB: number): boolean {
-  const data = state.workData!;
-  const dr = data[idx]     - refR;
-  const dg = data[idx + 1] - refG;
-  const db = data[idx + 2] - refB;
-  const d2 = dr * dr + dg * dg + db * db;
-  const max = (state.tolerance / 100) * 441;
-  return d2 <= max * max;
-}
-
-export function applyBrushDab(cx: number, cy: number, sampleColor: SampleColor | null): void {
+export function applyBrushDab(cx: number, cy: number): void {
   const data = state.workData;
   const orig = state.origData;
   if (!data || !orig) return;
@@ -43,7 +30,6 @@ export function applyBrushDab(cx: number, cy: number, sampleColor: SampleColor |
 
   const W = state.imgW;
   const isErase = state.tool === 'erase';
-  const useTol = state.toleranceOn && !!sampleColor;
 
   for (let py = y0; py <= y1; py++) {
     const dy = py - cy;
@@ -62,7 +48,6 @@ export function applyBrushDab(cx: number, cy: number, sampleColor: SampleColor |
         factor = 0;
       }
       const idx = (py * W + px) * 4;
-      if (useTol && !colorMatches(idx, sampleColor!.r, sampleColor!.g, sampleColor!.b)) continue;
       if (isErase) {
         const oldA = data[idx + 3];
         const newA = oldA * (1 - factor);
@@ -79,16 +64,13 @@ export function applyBrushDab(cx: number, cy: number, sampleColor: SampleColor |
   }
 }
 
-export function applyStroke(
-  x0: number, y0: number, x1: number, y1: number,
-  sampleColor: SampleColor | null,
-): void {
+export function applyStroke(x0: number, y0: number, x1: number, y1: number): void {
   const dx = x1 - x0, dy = y1 - y0;
   const dist = Math.sqrt(dx * dx + dy * dy);
   const stepSize = Math.max(0.5, state.brushSize * 0.25);
   const steps = Math.max(1, Math.ceil(dist / stepSize));
   for (let i = 1; i <= steps; i++) {
     const t = i / steps;
-    applyBrushDab(x0 + dx * t, y0 + dy * t, sampleColor);
+    applyBrushDab(x0 + dx * t, y0 + dy * t);
   }
 }

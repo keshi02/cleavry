@@ -6,10 +6,15 @@ import { $ } from '../utils/dom';
 const overlay = $('progress-overlay');
 const fill    = $('progress-fill');
 const title   = $('progress-title');
+const hint    = overlay.querySelector('.hint') as HTMLElement | null;
 
-export function showProgress(label: string): void {
+export function showProgress(label: string, options: { cancellable?: boolean } = {}): void {
   title.textContent = label || '処理中…';
   fill.style.width = '0%';
+  // Hide the "ESC to cancel" hint when the caller can't honour cancel
+  // (e.g. transformers.js inference is uncancellable). Defaults to
+  // cancellable so existing wand calls keep their hint.
+  if (hint) hint.style.display = options.cancellable === false ? 'none' : '';
   overlay.classList.add('show');
 }
 

@@ -367,16 +367,7 @@ function onPointerDown(e) {
   state.isDrawing = true;
   state.smoothPoints = [];
   pushUndo();
-  // Sample color at start for tolerance
-  let sample = null;
-  if (state.toleranceOn) {
-    const px = clamp(Math.floor(x), 0, state.imgW - 1);
-    const py = clamp(Math.floor(y), 0, state.imgH - 1);
-    const di = (py * state.imgW + px) * 4;
-    sample = { r: state.workData[di], g: state.workData[di+1], b: state.workData[di+2] };
-  }
-  state.strokeSampleColor = sample;
-  applyBrushDab(x, y, sample);
+  applyBrushDab(x, y);
   state.lastImgX = x;
   state.lastImgY = y;
   redraw();
@@ -458,9 +449,9 @@ function onPointerMove(e) {
   const x = sx / sw, y = sy / sw;
 
   if (state.lastImgX !== null) {
-    applyStroke(state.lastImgX, state.lastImgY, x, y, state.strokeSampleColor);
+    applyStroke(state.lastImgX, state.lastImgY, x, y);
   } else {
-    applyBrushDab(x, y, state.strokeSampleColor);
+    applyBrushDab(x, y);
   }
   state.lastImgX = x;
   state.lastImgY = y;
@@ -926,7 +917,7 @@ async function runAIBackgroundRemoval() {
 
   bgRemovalRunning = true;
   updateStatus();
-  showProgress('AI モデルを準備中…（初回は ~100MB のダウンロード）');
+  showProgress('AI モデルを準備中…（初回は ~100MB のダウンロード）', { cancellable: false });
 
   try {
     // workData → data-URL so transformers.js can decode it via fetch.
@@ -1019,6 +1010,16 @@ function setTool(name) {
   const sizeDisplay = $('size-display');
   if (sizeSlider) sizeSlider.disabled = sizeIrrelevant;
   if (sizeDisplay) sizeDisplay.textContent = sizeIrrelevant ? '—' : state.brushSize;
+  // Color tolerance only applies to wand-class tools. Disable the
+  // toggle / slider while a brush is selected so the user can't tweak
+  // a value that has no effect.
+  const isBrush = name === 'erase' || name === 'restore';
+  const tolToggle  = $<HTMLInputElement>('tolerance-toggle');
+  const tolSlider  = $<HTMLInputElement>('tolerance-slider');
+  const tolDisplay = $('tolerance-display');
+  if (tolToggle)  tolToggle.disabled = isBrush;
+  if (tolSlider)  tolSlider.disabled = isBrush;
+  if (tolDisplay) tolDisplay.textContent = isBrush ? '—' : String(state.tolerance);
   // Crosshair cursor while in rect-select mode.
   workspace.classList.toggle('rect-select-mode', name === 'rectSelect');
   // Show the rect controls when a wand or rect-select is active and a
@@ -1069,34 +1070,30 @@ function updateRectControlsVisibility() {
 // ============================================================================
 // Drag & drop
 // ============================================================================
-let dragCounter = 0;
+// Everything is bound at *document* level. The browser's default action
+// for a file drop is to open the file in the tab — we have to
+// preventDefault on dragover (and drop) to override that. Tracking
+// dragenter/leave on a child element runs into the "leaving parent /
+// entering child" problem; document-level dragover/dragleave with
+// relatedTarget === null is the simplest way to drive the visual
+// overlay reliably.
 function setupDragDrop() {
-  // The browser's default action for a file drop is to navigate to the
-  // file (i.e. open the image in the tab, blowing away our app). We
-  // have to preventDefault on dragover at the *document* level — if it
-  // only fires on #workspace, the browser still grabs drops that land
-  // anywhere else on the page, and we never see them.
-  document.addEventListener('dragover', e => e.preventDefault());
-
-  // Visual overlay: only light up when the drag is over the canvas area.
-  workspace.addEventListener('dragenter', e => {
+  document.addEventListener('dragover', e => {
     e.preventDefault();
-    dragCounter++;
-    if (dragCounter === 1) dropOverlay.classList.add('show');
-  });
-  workspace.addEventListener('dragleave', () => {
-    dragCounter--;
-    if (dragCounter <= 0) {
-      dragCounter = 0;
-      dropOverlay.classList.remove('show');
+    // Only show the overlay when the drag actually carries files.
+    if (e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files')) {
+      dropOverlay.classList.add('show');
     }
   });
 
-  // Accept drops anywhere on the page. Restricting to #workspace meant
-  // the user had to aim precisely; document-level is much more forgiving.
+  document.addEventListener('dragleave', e => {
+    // relatedTarget === null means the cursor left the window entirely
+    // (any child-to-child transition keeps a non-null relatedTarget).
+    if (e.relatedTarget === null) dropOverlay.classList.remove('show');
+  });
+
   document.addEventListener('drop', e => {
     e.preventDefault();
-    dragCounter = 0;
     dropOverlay.classList.remove('show');
     const files = Array.from(e.dataTransfer?.files || []);
     if (files.length === 0) return;
@@ -1447,8 +1444,10 @@ function bindKeys() {
     // Ignore when focus is in an input
     if (e.target.tagName === 'INPUT' && e.target.type !== 'checkbox') return;
 
-    // ESC: cancel running wand → exit component-picking mode → clear rect
-    // selection → close help
+    // ESC: cancel running wand → exit component-picking mode → clear
+    // rect selection → close help. AI background removal is *not*
+    // ESC-cancellable: transformers.js can't be aborted mid-flight, so
+    // pretending to cancel only confuses the user.
     if (e.key === 'Escape') {
       if (isWandRunning()) { e.preventDefault(); cancelWand(); return; }
       if (state.separateMode) { e.preventDefault(); exitSeparateMode(); return; }
