@@ -640,11 +640,9 @@ function applyStroke(x0, y0, x1, y1, sampleColor) {
   }
 }
 
-// ============================================================================
-// AI background removal — fully client-side via @imgly/background-removal.
-// Module + ONNX models are fetched lazily on first invocation; the browser
-// caches them, so subsequent runs are instant-load.
-// ============================================================================
+// AI background removal — module-level cache. Loaded lazily on first
+// invocation (see runAIBackgroundRemoval below) and cached via the
+// browser, so subsequent runs are instant.
 let bgRemovalModule = null;
 let bgRemovalRunning = false;
 
@@ -1517,24 +1515,22 @@ async function runAutoCleanup() {
 }
 
 // ============================================================================
-// AI background removal — lazy-load @imgly/background-removal and run it on
-// the current workData. origData (the source-with-background) is preserved,
-// so the existing restore brush / restore wand can paint back anything the
-// model shaved off too aggressively. Undoable in one step.
+// AI background removal — runs entirely in the browser. origData (source
+// with background) is preserved so the restore brush / restore wand can
+// paint back anything the model shaved off too aggressively. Undoable in
+// one step.
+//
+// Stack: transformers.js v4 (`@huggingface/transformers`) driving
+// AutoModel / AutoProcessor directly, against
+// `onnx-community/BiRefNet_512x512-ONNX` at fp16 on WebGPU.
+//
+// Why 512×512 and fp16/WebGPU: the 1024-input model breaks
+// onnxruntime-web's WebGPU shader-buffer ceiling, and fp32 weights OOM
+// the WASM 4 GB heap. fp16 + WebGPU sidesteps both by moving tensors to
+// the GPU and shrinking weights to ~115 MB.
+//
+// Output is raw logits — apply .sigmoid() before scaling to uint8.
 // ============================================================================
-// Using transformers.js v4 (`@huggingface/transformers`), driving AutoModel
-// / AutoProcessor directly.
-//
-// Model: `onnx-community/BiRefNet_512x512-ONNX` — full (non-lite) BiRefNet
-// re-exported at 512×512 input resolution, Apache-2.0. The 1024-input
-// version hits onnxruntime-web's WebGPU shader-buffer limit; this 512
-// export reduces intermediate feature volumes enough to (hopefully) clear
-// it. The lite-512 variant works but its distilled weights have weaker
-// foreground/background discrimination. fp16 weights ~473MB.
-//
-// API: input tensor `input_image`, output tensor `output_image` (or
-// `logits` for some exports — we accept either). Output is raw logits —
-// apply .sigmoid() before scaling to uint8.
 let bgSegmenter = null;
 const TRANSFORMERS_VERSION = '4.2.0';
 const BG_MODEL_ID = 'onnx-community/BiRefNet_512x512-ONNX';
@@ -1545,8 +1541,6 @@ async function loadBgRemovalModule() {
     /* @vite-ignore */
     `https://cdn.jsdelivr.net/npm/@huggingface/transformers@${TRANSFORMERS_VERSION}`
   );
-  // Pull the model from Hugging Face's CDN. studioludens/birefnet-lite-512
-  // is MIT-licensed and ships its own ONNX + preprocessor config.
   bgRemovalModule.env.allowLocalModels = false;
   bgRemovalModule.env.allowRemoteModels = true;
   return bgRemovalModule;
@@ -1555,18 +1549,7 @@ async function loadBgRemovalModule() {
 async function getBgSegmenter(progressCallback) {
   if (bgSegmenter) return bgSegmenter;
   const mod = await loadBgRemovalModule();
-  // RMBG-1.4 doesn't fit any high-level pipeline cleanly across versions
-  // (the v3 'background-removal' task was added in 3.5+, and v2's
-  // 'image-segmentation' rejects the model architecture). The official
-  // Hugging Face example uses the low-level Auto* APIs directly — we do
-  // the same so we work across the v3 line.
   const { AutoModel, AutoProcessor, RawImage } = mod;
-  // fp32 lite worked end-to-end up to forward, then OOMed
-  // (`std::bad_alloc`) — the U-Net intermediate features at 1024² overflow
-  // WASM's 4GB heap. Pinning to fp16 + WebGPU moves all the tensor memory
-  // onto the GPU, sidesteps the WASM heap entirely, and shrinks weights to
-  // ~115MB. The full BiRefNet's shader-buffer ceiling doesn't apply to
-  // lite (different layer topology).
   const hasWebGPU = typeof navigator !== 'undefined'
     && typeof navigator.gpu !== 'undefined';
   if (!hasWebGPU) {
