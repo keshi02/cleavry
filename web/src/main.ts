@@ -21,6 +21,8 @@ import { state } from './state';
 import { applyBrushDab, applyStroke } from './tools/brush';
 import { magicWandAt as runMagicWand, cancelWand, isWandRunning } from './tools/wand';
 import { detectComponents, SEPARATE_MIN_AREA } from './components/connected';
+import { showProgress, updateProgress, hideProgress, setProgressTitle } from './ui/progress';
+import { showError } from './ui/error';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -46,15 +48,6 @@ const rectOverlayCtx = rectOverlay.getContext('2d');
 // ============================================================================
 // Helpers
 // ============================================================================
-function showError(msg) {
-  // Fire-and-forget — caller doesn't need to await dismissal.
-  showModal({
-    title: 'エラー',
-    message: String(msg),
-    buttons: [{ label: 'OK', value: true, primary: true }],
-  });
-}
-
 function updateStatus() {
   $('size-status').textContent = state.imgW
     ? `${state.imgW} × ${state.imgH} px`
@@ -451,25 +444,6 @@ const UNDO_KEY_THROTTLE_MS = 80;
 // time so users can sweep across the full 1-300 range without RSI, while
 // single taps still nudge by exactly 1 px.
 const brushKeyAccel = { lastTime: 0, lastDir: 0, runLength: 0 };
-
-// ============================================================================
-// Progress overlay — shared by magic wand and AI background removal.
-// ============================================================================
-const progressOverlay = $('progress-overlay');
-const progressFill    = $('progress-fill');
-const progressTitle   = $('progress-title');
-
-function showProgress(label) {
-  progressTitle.textContent = label || '処理中…';
-  progressFill.style.width = '0%';
-  progressOverlay.classList.add('show');
-}
-function updateProgress(percent) {
-  progressFill.style.width = percent + '%';
-}
-function hideProgress() {
-  progressOverlay.classList.remove('show');
-}
 
 // Magic wand: thin glue. The BFS itself lives in tools/wand.ts; here we
 // just hand it the progress / redraw / autosave callbacks.
@@ -923,7 +897,7 @@ async function saveSelectedComponents() {
     updateProgress(((i + 1) / selected.length) * 95);
   }
 
-  progressTitle.textContent = 'ZIP を生成中…';
+  setProgressTitle('ZIP を生成中…');
   const zipBlob = await zip.generateAsync(
     { type: 'blob' },
     meta => updateProgress(95 + meta.percent * 0.05)
@@ -1131,7 +1105,7 @@ async function runAIBackgroundRemoval() {
         'inferring':   'AI で背景除去中…',
         'finalizing':  '結果を反映中…',
       };
-      progressTitle.textContent = titles[e.phase];
+      setProgressTitle(titles[e.phase]);
       updateProgress(Math.min(99, e.progress));
     });
 
