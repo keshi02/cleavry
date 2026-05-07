@@ -13,6 +13,10 @@ import { showModal } from './ui/modal';
 import { saveSession, loadSession, clearSession } from './persist/autosave';
 import { segmentBackground } from './ai/background';
 import { feather } from './image/feather';
+import {
+  showOriginalOverlay, hideOriginalOverlay, toggleOriginalOverlay,
+  setOriginalOverlayOpacity,
+} from './ui/originalOverlay';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -1494,40 +1498,6 @@ async function runAIBackgroundRemoval() {
 }
 
 // ============================================================================
-// Original overlay — show the source image dimmed beneath the working canvas
-// so the user can see exactly where pixels have been removed.
-// ============================================================================
-const origOverlayCanvas = $('orig-overlay');
-const origOverlayCtx = origOverlayCanvas.getContext('2d');
-
-function paintOriginalOverlay() {
-  if (!state.origData) return;
-  origOverlayCanvas.width = state.imgW;
-  origOverlayCanvas.height = state.imgH;
-  origOverlayCtx.putImageData(
-    new ImageData(state.origData, state.imgW, state.imgH), 0, 0
-  );
-}
-
-function showOriginalOverlay() {
-  if (!state.origData) return;
-  paintOriginalOverlay();
-  origOverlayCanvas.classList.add('show');
-  $('show-orig-btn').classList.add('active');
-  origOverlayCanvas.style.opacity = String((+$('orig-opacity').value) / 100);
-}
-
-function hideOriginalOverlay() {
-  origOverlayCanvas.classList.remove('show');
-  $('show-orig-btn').classList.remove('active');
-}
-
-function toggleOriginalOverlay() {
-  if (origOverlayCanvas.classList.contains('show')) hideOriginalOverlay();
-  else showOriginalOverlay();
-}
-
-// ============================================================================
 // Returns workData with feather applied if the toggle is on, otherwise
 // workData unchanged. Used by save / export paths.
 function workDataForExport() {
@@ -1867,9 +1837,12 @@ function bindUI() {
     if (f) loadAIOutputFile(f);
     $('ai-file-input').value = '';
   };
-  $('show-orig-btn').onclick = toggleOriginalOverlay;
+  $('show-orig-btn').onclick = () => {
+    if (!state.origData) return;
+    toggleOriginalOverlay(state.origData, state.imgW, state.imgH);
+  };
   $('orig-opacity').oninput = e => {
-    origOverlayCanvas.style.opacity = String((+e.target.value) / 100);
+    setOriginalOverlayOpacity(+e.target.value);
   };
   // Drop focus once the user lets go, otherwise the bindKeys input-guard
   // keeps absorbing Cmd+Z / Space / etc. into the slider until they click
