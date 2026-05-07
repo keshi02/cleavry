@@ -8,6 +8,7 @@ import { clamp } from './utils/clamp';
 import { $, isOverlayActive } from './utils/dom';
 import { isMac } from './utils/platform';
 import { showToast } from './ui/toast';
+import { initTheme, cycleTheme } from './ui/theme';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -60,7 +61,6 @@ const state = {
   autoCleanupThreshold: 16, // default px² for one-shot auto-cleanup
   saveFormat: 'png',      // 'png' | 'webp' | 'jpeg'
   autoSaveEnabled: true,  // overridden from localStorage on init
-  theme: 'system',        // 'system' | 'light' | 'dark'
 };
 try {
   const v = localStorage.getItem('autosave-enabled');
@@ -2219,46 +2219,6 @@ function bindUI() {
     }
     e.target.blur();
   };
-}
-
-// ============================================================================
-// Theme — system (follows OS) / light / dark, cycled by the toolbar button.
-// CSS does the actual work via :root[data-theme=...]; here we just toggle
-// the attribute and persist the choice. "system" removes the attribute so
-// the @media (prefers-color-scheme) rule kicks in.
-// ============================================================================
-const THEME_KEY = 'eraser-theme';
-const THEME_META = {
-  system: { label: 'システム', tip: 'テーマ：システム（クリックでライトに切替）' },
-  light:  { label: 'ライト',   tip: 'テーマ：ライト（クリックでダークに切替）' },
-  dark:   { label: 'ダーク',   tip: 'テーマ：ダーク（クリックでシステムに切替）' },
-};
-const THEME_NEXT = { system: 'light', light: 'dark', dark: 'system' };
-
-function applyTheme(theme) {
-  if (!THEME_META[theme]) theme = 'system';
-  state.theme = theme;
-  if (theme === 'system') {
-    document.documentElement.removeAttribute('data-theme');
-  } else {
-    document.documentElement.setAttribute('data-theme', theme);
-  }
-  try { localStorage.setItem(THEME_KEY, theme); } catch (_) { /* private mode */ }
-  const btn = $('theme-btn');
-  if (btn) {
-    btn.textContent = THEME_META[theme].label;
-    btn.dataset.tip = THEME_META[theme].tip;
-  }
-}
-
-function cycleTheme() {
-  applyTheme(THEME_NEXT[state.theme] || 'system');
-}
-
-function initTheme() {
-  let saved = 'system';
-  try { saved = localStorage.getItem(THEME_KEY) || 'system'; } catch (_) {}
-  applyTheme(saved);
 }
 
 // ============================================================================
