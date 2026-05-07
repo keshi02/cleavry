@@ -24,6 +24,13 @@ import { detectComponents, SEPARATE_MIN_AREA } from './components/connected';
 import { showProgress, updateProgress, hideProgress, setProgressTitle } from './ui/progress';
 import { showError } from './ui/error';
 import { initHistory, pushUndo, undo, redoFn } from './persist/history';
+import {
+  canvas, ctx, canvasWrap, workspace, cursor, rectOverlay,
+  setRenderHooks,
+  redraw, applyTransform, drawRectOverlay, clearRectSelection,
+  fitToScreen as fitToScreenImpl, actualSize as actualSizeImpl,
+  screenToImage, updateCursor,
+} from './canvas/render';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -33,18 +40,14 @@ declare const JSZip: any;
 // ============================================================================
 // DOM
 // ============================================================================
-const workspace = $('workspace');
-const canvasWrap = $('canvas-wrap');
-const canvas = $('canvas');
-const ctx = canvas.getContext('2d', { willReadFrequently: true });
-const cursor = $('cursor-overlay');
+// workspace / canvas / ctx / canvasWrap / cursor / rectOverlay are
+// imported from canvas/render. Drop / empty / file inputs and the
+// component overlay stay local to main.ts since they're only used here.
 const dropOverlay = $('drop-overlay');
 const emptyHint = $('empty-hint');
 const fileInput = $('file-input');
-const componentOverlay = $('component-overlay');
-const overlayCtx = componentOverlay.getContext('2d');
-const rectOverlay = $('rect-overlay');
-const rectOverlayCtx = rectOverlay.getContext('2d');
+const componentOverlay = $<HTMLCanvasElement>('component-overlay');
+const overlayCtx = componentOverlay.getContext('2d')!;
 
 // ============================================================================
 // Helpers
@@ -253,146 +256,11 @@ function loadAIOutputFile(file) {
   img.src = URL.createObjectURL(file);
 }
 
-function redraw() {
-  if (!state.workData) return;
-  const id = new ImageData(state.workData, state.imgW, state.imgH);
-  ctx.putImageData(id, 0, 0);
-  applyTransform();
-}
-
-function applyTransform() {
-  canvasWrap.style.transform =
-    `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
-  canvasWrap.style.width = state.imgW + 'px';
-  canvasWrap.style.height = state.imgH + 'px';
-  if (state.separateMode) drawComponentOverlay();
-  if (state.rectSelection) drawRectOverlay();
-}
-
-// ── Rect-selection overlay ──────────────────────────────────────────
-function drawRectOverlay() {
-  if (!state.rectSelection || !state.imgW) {
-    rectOverlay.classList.remove('show');
-    return;
-  }
-  rectOverlay.width = state.imgW;
-  rectOverlay.height = state.imgH;
-  rectOverlay.classList.add('show');
-
-  const ctx = rectOverlayCtx;
-  ctx.clearRect(0, 0, state.imgW, state.imgH);
-
-  const { minX, minY, maxX, maxY } = state.rectSelection;
-  const w = maxX - minX + 1;
-  const h = maxY - minY + 1;
-
-  // Highlight the active region (inside or outside the rect).
-  if (state.rectInverse) {
-    ctx.fillStyle = 'rgba(220, 70, 70, 0.12)';
-    ctx.fillRect(0, 0, state.imgW, state.imgH);
-    ctx.clearRect(minX, minY, w, h);
-  } else {
-    ctx.fillStyle = 'rgba(124, 209, 124, 0.14)';
-    ctx.fillRect(minX, minY, w, h);
-  }
-
-  // Dashed border.
-  const lineW = Math.max(0.5, 2 / state.zoom);
-  const dash = Math.max(2, 8 / state.zoom);
-  const gap  = Math.max(1, 4 / state.zoom);
-  ctx.lineWidth = lineW;
-  ctx.strokeStyle = state.rectInverse ? '#dc4646' : '#3aa55a';
-  ctx.setLineDash([dash, gap]);
-  ctx.strokeRect(minX + lineW / 2, minY + lineW / 2,
-                 Math.max(0, w - lineW), Math.max(0, h - lineW));
-  ctx.setLineDash([]);
-}
-
-function clearRectSelection() {
-  state.rectSelection = null;
-  state.rectDragStart = null;
-  drawRectOverlay();
-  // Rect-select button stops being "armed" once the rect is gone.
-  refreshToolButtonsActive();
-}
-
-// Returns true when (px, py) should be processable under the current
-// rectangle restriction. No restriction → always true. Inside mode → only
-// pixels inside the rect. Outside mode → only pixels outside.
-function rectAllows(px, py) {
-  const r = state.rectSelection;
-  if (!r) return true;
-  const inside = px >= r.minX && px <= r.maxX && py >= r.minY && py <= r.maxY;
-  return state.rectInverse ? !inside : inside;
-}
-
-function fitToScreen() {
-  if (!state.imgW) return;
-  const r = workspace.getBoundingClientRect();
-  const margin = 40;
-  state.zoom = Math.min(
-    (r.width - margin) / state.imgW,
-    (r.height - margin) / state.imgH
-  );
-  state.zoom = clamp(state.zoom, 0.05, 16);
-  state.panX = (r.width - state.imgW * state.zoom) / 2;
-  state.panY = (r.height - state.imgH * state.zoom) / 2;
-  applyTransform();
-  updateStatus();
-}
-
-function actualSize() {
-  if (!state.imgW) return;
-  const r = workspace.getBoundingClientRect();
-  state.zoom = 1;
-  state.panX = (r.width - state.imgW) / 2;
-  state.panY = (r.height - state.imgH) / 2;
-  applyTransform();
-  updateStatus();
-}
-
-// ============================================================================
-// Coordinates
-// ============================================================================
-function screenToImage(screenX, screenY) {
-  const r = workspace.getBoundingClientRect();
-  const x = (screenX - r.left - state.panX) / state.zoom;
-  const y = (screenY - r.top  - state.panY) / state.zoom;
-  return { x, y };
-}
-
-function updateCursor(screenX, screenY) {
-  if (!state.workData) {
-    cursor.style.display = 'none';
-    return;
-  }
-  if (state.isPanning || state.spaceHeld || state.separateMode || state.cleanupMode) {
-    cursor.style.display = 'none';
-    return;
-  }
-  // The brush-radius circle only makes sense for the painting tools. Wand
-  // and rect-select operate per-click / per-drag so the circle is noise.
-  if (state.tool !== 'erase' && state.tool !== 'restore') {
-    cursor.style.display = 'none';
-    return;
-  }
-  // Now that pointermove is bound on window, the pointer can sit on the
-  // toolbar / status bar / outside the page — don't draw the brush ring there.
-  const r = workspace.getBoundingClientRect();
-  if (screenX < r.left || screenX > r.right || screenY < r.top || screenY > r.bottom) {
-    cursor.style.display = 'none';
-    return;
-  }
-  cursor.style.display = 'block';
-  cursor.style.left = (screenX - r.left) + 'px';
-  cursor.style.top  = (screenY - r.top) + 'px';
-  const screenSize = state.brushSize * state.zoom * 2;  // diameter
-  cursor.style.width = screenSize + 'px';
-  cursor.style.height = screenSize + 'px';
-  cursor.style.borderColor =
-    (state.tool === 'restore' || state.tool === 'restoreWand') ? '#7cd17c' : '#fff';
-  cursor.classList.toggle('is-restore', state.tool === 'restore');
-}
+// fitToScreen / actualSize need updateStatus, which lives in main.ts.
+// Rather than forcing every caller to pass it, wrap the canvas-module
+// versions once here.
+function fitToScreen() { fitToScreenImpl(updateStatus); }
+function actualSize()   { actualSizeImpl(updateStatus); }
 
 // ============================================================================
 // Undo / Redo
@@ -1722,8 +1590,13 @@ window.addEventListener('paste', e => {
   }
 });
 
-// Wire history hooks first so any push/undo triggered by other init
-// (e.g. autosave restore) sees the application's redraw / status / etc.
+// Wire render-side hooks (component overlay redraw on transform, tool-
+// button refresh on rect clear) and history hooks first, so anything
+// triggered during the rest of init sees the application callbacks.
+setRenderHooks({
+  refreshToolButtons: refreshToolButtonsActive,
+  drawComponentOverlay,
+});
 initHistory({ redraw, updateStatus, scheduleAutosave, exitSeparateMode, exitCleanupMode });
 
 bindUI();
