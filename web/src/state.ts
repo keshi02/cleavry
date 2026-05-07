@@ -45,8 +45,7 @@ export interface AppState {
 
   brushSize: number;
   brushHardness: number;                    // 0..100
-  toleranceOn: boolean;
-  tolerance: number;                        // 0..100 (percent)
+  tolerance: number;                        // 0..100 (percent), wand only
 
   undo: Uint8ClampedArray[];
   redo: Uint8ClampedArray[];
@@ -93,7 +92,6 @@ export const state: AppState = {
   pendingWandClick: null,
   brushSize: 40,
   brushHardness: 70,
-  toleranceOn: false,
   tolerance: 20,
   undo: [],
   redo: [],

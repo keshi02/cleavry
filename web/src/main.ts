@@ -1011,13 +1011,11 @@ function setTool(name) {
   if (sizeSlider) sizeSlider.disabled = sizeIrrelevant;
   if (sizeDisplay) sizeDisplay.textContent = sizeIrrelevant ? '—' : state.brushSize;
   // Color tolerance only applies to wand-class tools. Disable the
-  // toggle / slider while a brush is selected so the user can't tweak
-  // a value that has no effect.
+  // slider while a brush is selected so the user can't tweak a value
+  // that has no effect.
   const isBrush = name === 'erase' || name === 'restore';
-  const tolToggle  = $<HTMLInputElement>('tolerance-toggle');
   const tolSlider  = $<HTMLInputElement>('tolerance-slider');
   const tolDisplay = $('tolerance-display');
-  if (tolToggle)  tolToggle.disabled = isBrush;
   if (tolSlider)  tolSlider.disabled = isBrush;
   if (tolDisplay) tolDisplay.textContent = isBrush ? '—' : String(state.tolerance);
   // Crosshair cursor while in rect-select mode.
@@ -1253,10 +1251,6 @@ function bindUI() {
     el.addEventListener('change',    e => (e.target as HTMLElement).blur());
     el.addEventListener('pointerup', e => (e.target as HTMLElement).blur());
   });
-  $('tolerance-toggle').onchange = e => {
-    state.toleranceOn = e.target.checked;
-    e.target.blur();
-  };
   $('preserve-canvas-toggle').onchange = e => {
     state.preserveCanvas = e.target.checked;
     e.target.blur();
