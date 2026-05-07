@@ -7,6 +7,7 @@
 import { clamp } from './utils/clamp';
 import { $, isOverlayActive } from './utils/dom';
 import { isMac } from './utils/platform';
+import { showToast } from './ui/toast';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -153,16 +154,6 @@ function showModal({ title = '', message = '', buttons = [{ label: 'OK', value: 
     document.body.appendChild(overlay);
     if (firstFocus) firstFocus.focus();
   });
-}
-
-let toastTimer = null;
-function showToast(msg) {
-  const el = $('toast');
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
 }
 
 function updateStatus() {
