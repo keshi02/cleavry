@@ -20,6 +20,7 @@ import { saveImage } from './io/save';
 import { state } from './state';
 import { applyBrushDab, applyStroke } from './tools/brush';
 import { magicWandAt as runMagicWand, cancelWand, isWandRunning } from './tools/wand';
+import { detectComponents, SEPARATE_MIN_AREA } from './components/connected';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -726,65 +727,6 @@ function onWheel(e) {
 // ============================================================================
 // Connected components / Separate-save mode
 // ============================================================================
-const SEPARATE_MIN_AREA = 4;   // ignore noise specks smaller than this
-
-function detectComponents() {
-  const W = state.imgW, H = state.imgH;
-  const data = state.workData;
-  const mask = new Uint32Array(W * H);
-  const components = [];
-  let nextId = 1;
-  // Worst case: every pixel sits on the stack at most once.
-  const stack = new Int32Array(W * H * 2);
-
-  for (let sy = 0; sy < H; sy++) {
-    for (let sx = 0; sx < W; sx++) {
-      const seedPi = sy * W + sx;
-      if (mask[seedPi] !== 0) continue;
-      if (data[seedPi * 4 + 3] === 0) continue;
-
-      const id = nextId++;
-      let minX = sx, minY = sy, maxX = sx, maxY = sy, area = 0;
-      let sp = 0;
-      stack[sp++] = sx; stack[sp++] = sy;
-      mask[seedPi] = id;
-
-      while (sp > 0) {
-        const cy = stack[--sp];
-        const cx = stack[--sp];
-        area++;
-        if (cx < minX) minX = cx;
-        if (cy < minY) minY = cy;
-        if (cx > maxX) maxX = cx;
-        if (cy > maxY) maxY = cy;
-
-        for (let dy = -1; dy <= 1; dy++) {
-          const ny = cy + dy;
-          if (ny < 0 || ny >= H) continue;
-          for (let dx = -1; dx <= 1; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            const nx = cx + dx;
-            if (nx < 0 || nx >= W) continue;
-            const ni = ny * W + nx;
-            if (mask[ni] !== 0) continue;
-            if (data[ni * 4 + 3] === 0) continue;
-            mask[ni] = id;
-            stack[sp++] = nx; stack[sp++] = ny;
-          }
-        }
-      }
-
-      if (area >= SEPARATE_MIN_AREA) {
-        components.push({ id, minX, minY, maxX, maxY, area, selected: true });
-      }
-      // Tiny specks keep their id in the mask but are not exposed to the UI.
-    }
-  }
-
-  // Largest first so the user sees the meaningful elements before noise.
-  components.sort((a, b) => b.area - a.area);
-  return { components, mask };
-}
 
 function drawComponentOverlay() {
   if (!state.separateMode && !state.cleanupMode) {
@@ -859,7 +801,7 @@ async function startSeparateMode() {
 
   let result;
   try {
-    result = detectComponents();
+    result = detectComponents(state.workData, state.imgW, state.imgH);
   } catch (err) {
     hideProgress();
     showError('処理に失敗しました');
@@ -1017,7 +959,7 @@ async function startCleanupMode() {
 
   let result;
   try {
-    result = detectComponents();
+    result = detectComponents(state.workData, state.imgW, state.imgH);
   } catch (err) {
     hideProgress();
     showError('処理に失敗しました');
@@ -1118,7 +1060,7 @@ async function runAutoCleanup() {
 
   let result;
   try {
-    result = detectComponents();
+    result = detectComponents(state.workData, state.imgW, state.imgH);
   } catch (err) {
     hideProgress();
     showError('処理に失敗しました');
