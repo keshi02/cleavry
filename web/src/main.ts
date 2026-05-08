@@ -878,9 +878,21 @@ async function runAutoCleanup() {
   const keep = new Set(
     result.components.filter(c => c.area > threshold).map(c => c.id)
   );
-  const removedCount = result.components.length - keep.size;
 
-  if (removedCount === 0) {
+  // Count actually-removable pixels by scanning the mask. The naive
+  // components.length - keep.size shortcut undercounts: detectComponents
+  // skips sub-SEPARATE_MIN_AREA specks (areas 1-3 px) when building
+  // `components`, but those still have ids in `mask` and are valid
+  // removal targets here.
+  let pixelsToRemove = 0;
+  for (let i = 0; i < N; i++) {
+    const id = mask[i];
+    if (id === 0) continue;
+    if (keep.has(id)) continue;
+    pixelsToRemove++;
+  }
+
+  if (pixelsToRemove === 0) {
     showError(t('error.noSmallElements'));
     return;
   }
