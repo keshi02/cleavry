@@ -1004,6 +1004,12 @@ const TOOL_HINT_KEY = {
 
 function setTool(name) {
   const prev = state.tool;
+  // Save the outgoing brush's size into its dedicated slot so the
+  // remembered values stay in sync with whatever the slider currently
+  // shows.
+  if (prev === 'erase')   state.eraseSize   = state.brushSize;
+  if (prev === 'restore') state.restoreSize = state.brushSize;
+
   state.tool = name;
   // Switching tools mid-press would leave a stale pending click around;
   // drop it so the next pointerup doesn't fire the previous tool's wand.
@@ -1014,12 +1020,18 @@ function setTool(name) {
   // Switching to a non-wand-related tool drops any pending rect, since
   // the rect only exists to scope wand targets.
   if (name === 'erase' || name === 'restore') clearRectSelection();
+  // Restore the size remembered for the incoming brush.
+  if (name === 'erase')   state.brushSize = state.eraseSize;
+  if (name === 'restore') state.brushSize = state.restoreSize;
   // Brush size is meaningless for wand and rect-select (both operate on
   // whole regions), so dim the slider and show "—".
   const sizeIrrelevant = name === 'wand' || name === 'restoreWand' || name === 'rectSelect';
-  const sizeSlider = $('size-slider');
+  const sizeSlider = $<HTMLInputElement>('size-slider');
   const sizeDisplay = $('size-display');
-  if (sizeSlider) sizeSlider.disabled = sizeIrrelevant;
+  if (sizeSlider) {
+    sizeSlider.disabled = sizeIrrelevant;
+    if (!sizeIrrelevant) sizeSlider.value = String(state.brushSize);
+  }
   if (sizeDisplay) sizeDisplay.textContent = sizeIrrelevant ? '—' : state.brushSize;
   // Color tolerance only applies to wand-class tools. Disable the
   // slider while a brush is selected so the user can't tweak a value
@@ -1244,7 +1256,12 @@ function bindUI() {
   });
 
   $('size-slider').oninput = e => {
-    state.brushSize = +e.target.value;
+    const v = +e.target.value;
+    state.brushSize = v;
+    // Mirror the change into the per-tool memory so switching away and
+    // back restores this size.
+    if (state.tool === 'erase')   state.eraseSize   = v;
+    if (state.tool === 'restore') state.restoreSize = v;
     $('size-display').textContent = state.brushSize;
   };
   $('hardness-slider').oninput = e => {
@@ -1529,6 +1546,9 @@ function bindKeys() {
       const n = brushKeyAccel.runLength;
       const step = n > 30 ? 16 : n > 18 ? 8 : n > 10 ? 4 : n > 4 ? 2 : 1;
       state.brushSize = clamp(state.brushSize + dir * step, 1, 300);
+      // Keep the per-tool memory in sync with [ / ] adjustments too.
+      if (state.tool === 'erase')   state.eraseSize   = state.brushSize;
+      if (state.tool === 'restore') state.restoreSize = state.brushSize;
       $('size-slider').value = state.brushSize;
       $('size-display').textContent = state.brushSize;
       // Live-update the on-canvas cursor circle so the user sees the new

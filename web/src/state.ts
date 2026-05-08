@@ -43,7 +43,9 @@ export interface AppState {
   rectDragStart: { x: number; y: number } | null;
   pendingWandClick: { x: number; y: number } | null;
 
-  brushSize: number;
+  brushSize: number;                        // currently active tool's size (mirror)
+  eraseSize: number;                        // remembered size for the eraser
+  restoreSize: number;                      // remembered size for the restore brush
   brushHardness: number;                    // 0..100
   tolerance: number;                        // 0..100 (percent), wand only
 
@@ -91,6 +93,8 @@ export const state: AppState = {
   rectDragStart: null,
   pendingWandClick: null,
   brushSize: 40,
+  eraseSize: 40,
+  restoreSize: 40,
   brushHardness: 70,
   tolerance: 20,
   undo: [],
