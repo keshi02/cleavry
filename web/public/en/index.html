@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cleavry — Privacy-first transparency editor in your browser</title>
+<meta name="description" content="Free, in-browser image transparency editor with AI background removal. Your images never leave your device. No ads, no signup, no usage limits.">
+<meta name="theme-color" content="#1e1e1e">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cleavry.com/en">
+<meta property="og:title" content="Cleavry — Privacy-first transparency editor in your browser">
+<meta property="og:description" content="Free in-browser AI background removal + manual touchups. Your images never leave your device.">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Cleavry">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Cleavry">
+<meta name="twitter:description" content="Free in-browser AI background removal. Your images never leave your device.">
+
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236c7eff%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M21%2012a9%209%200%201%201-9-9%22%2F%3E%3Cpath%20d%3D%22m17%208-5%204%2C0%200%200%200%22%2F%3E%3C%2Fsvg%3E">
+
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fafafa;
+    --panel: #ffffff;
+    --panel-hi: #f4f4f4;
+    --text: #1a1a1a;
+    --muted: #555;
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --border: #e5e5e5;
+    --on-accent: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1e;
+      --panel: #262626;
+      --panel-hi: #303030;
+      --text: #e8e8e8;
+      --muted: #999;
+      --accent: #6c7eff;
+      --accent-hover: #8a99ff;
+      --border: #3a3a3a;
+      --on-accent: #ffffff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    line-height: 1.7;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .nav {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 18px;
+  }
+  .brand svg {
+    width: 22px;
+    height: 22px;
+    stroke: var(--accent);
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .nav .lang {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .hero {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px 60px;
+    text-align: center;
+  }
+  .hero h1 {
+    font-size: 40px;
+    line-height: 1.25;
+    margin: 0 0 18px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .hero .tagline {
+    font-size: 17px;
+    color: var(--muted);
+    margin: 0 0 32px;
+    max-width: 620px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: var(--on-accent);
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background 0.15s;
+  }
+  .cta:hover { background: var(--accent-hover); text-decoration: none; }
+  .cta-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .cta-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .cta-secondary:hover { background: var(--panel-hi); text-decoration: none; }
+
+  section {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+  section h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 20px;
+  }
+
+  .compare {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .compare th, .compare td {
+    padding: 14px 18px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .compare tr:last-child td { border-bottom: 0; }
+  .compare th { background: var(--panel-hi); font-size: 13px; font-weight: 600; }
+  .compare .yes { color: var(--accent); font-weight: 600; }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .feature {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .feature h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 6px;
+    color: var(--accent);
+  }
+  .feature p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .faq dt {
+    font-weight: 600;
+    margin: 16px 0 4px;
+    font-size: 15px;
+  }
+  .faq dd {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  footer {
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+    padding: 24px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  footer a { color: var(--muted); margin: 0 8px; }
+  footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="brand" href="/en">
+    <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M16 8l-5 4 5 4"/></svg>
+    Cleavry
+  </a>
+  <span class="lang">English · <a href="/">日本語</a></span>
+</nav>
+
+<section class="hero">
+  <h1>Privacy-first transparency editor<br>that runs in your browser</h1>
+  <p class="tagline">
+    AI background removal and manual touchups, entirely on your device.
+    No ads, no signup, no usage limits, no data collection. Free forever.
+  </p>
+  <div class="cta-row">
+    <a class="cta" href="/">Try Cleavry now →</a>
+    <a class="cta-secondary" href="https://github.com/keshi02/cleavry" target="_blank" rel="noopener noreferrer">Source on GitHub</a>
+  </div>
+</section>
+
+<section>
+  <h2>Why Cleavry?</h2>
+  <table class="compare">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Typical SaaS background removers</th>
+        <th>Cleavry</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Where your image is processed</td>
+        <td>Uploaded to a server</td>
+        <td><span class="yes">Stays on your device</span></td>
+      </tr>
+      <tr>
+        <td>Ads / trackers</td>
+        <td>Yes</td>
+        <td><span class="yes">None</span></td>
+      </tr>
+      <tr>
+        <td>Usage limits</td>
+        <td>Free tier limited (low-res, daily quota)</td>
+        <td><span class="yes">Unlimited</span></td>
+      </tr>
+      <tr>
+        <td>Account / signup</td>
+        <td>Required</td>
+        <td><span class="yes">Not required</span></td>
+      </tr>
+      <tr>
+        <td>Time to first edit</td>
+        <td>Sign in → wait → process</td>
+        <td><span class="yes">Open URL, drop image, done</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>What you can do</h2>
+  <div class="feature-grid">
+    <div class="feature">
+      <h3>AI background removal</h3>
+      <p>BiRefNet runs in your browser via WebGPU. No server, no API key. Your image stays local.</p>
+    </div>
+    <div class="feature">
+      <h3>Manual touchups</h3>
+      <p>Eraser and restore brush with adjustable size and hardness. Fix the parts the AI got wrong.</p>
+    </div>
+    <div class="feature">
+      <h3>Magic wand</h3>
+      <p>One-click flood-fill by color similarity, with optional rectangular scope.</p>
+    </div>
+    <div class="feature">
+      <h3>Noise cleanup</h3>
+      <p>Remove leftover specks by connected component, or auto-clean by area threshold.</p>
+    </div>
+    <div class="feature">
+      <h3>Edge feathering</h3>
+      <p>Soften jagged hair edges on save without changing your working image.</p>
+    </div>
+    <div class="feature">
+      <h3>Original overlay</h3>
+      <p>Compare against the source image to see exactly what's been removed.</p>
+    </div>
+    <div class="feature">
+      <h3>Auto-save</h3>
+      <p>Edits persist in IndexedDB. Refresh and pick up where you left off.</p>
+    </div>
+    <div class="feature">
+      <h3>PWA</h3>
+      <p>Install to your home screen. Works offline after the first visit.</p>
+    </div>
+  </div>
+</section>
+
+<section class="faq">
+  <h2>FAQ</h2>
+  <dl>
+    <dt>Is it really free?</dt>
+    <dd>Yes. Forever. The site has no ads or trackers. There is no paid tier today; if a Pro tier ships in the future, it will add features on top of the free tier (which will keep working as-is).</dd>
+
+    <dt>Where does my image go?</dt>
+    <dd>Nowhere. All processing — including the AI inference — happens on your own device. The site has no upload endpoint; it can't receive your image even if it tried.</dd>
+
+    <dt>Why is the first AI run slow?</dt>
+    <dd>The model file (~470MB) downloads on first use, then caches in your browser. Subsequent runs are instant.</dd>
+
+    <dt>Which browsers work?</dt>
+    <dd>AI background removal needs WebGPU — Chrome, Edge, or Firefox latest. Safari can use the manual editing features but not the AI step (yet).</dd>
+
+    <dt>Can I use this commercially?</dt>
+    <dd>Yes. The output is yours. The source code is MIT-licensed. Just respect the original images' rights.</dd>
+
+    <dt>How can I support the developer?</dt>
+    <dd>The project is one person's labor of love. <a href="https://buymeacoffee.com/chikubo" target="_blank" rel="noopener noreferrer">Buy me a coffee</a> if Cleavry saved you time.</dd>
+  </dl>
+</section>
+
+<footer>
+  <a href="/">日本語</a>
+  <a href="/privacy">Privacy</a>
+  <a href="/terms">Terms</a>
+  <a href="mailto:support@cleavry.com">Contact</a>
+  <a href="https://github.com/keshi02/cleavry" target="_blank" rel="noopener noreferrer">GitHub</a>
+  <a href="https://buymeacoffee.com/chikubo" target="_blank" rel="noopener noreferrer">Buy me a coffee</a>
+  <p style="margin-top: 16px;">© 2026 Sui Yamamoto · MIT License</p>
+</footer>
+
+</body>
+</html>
