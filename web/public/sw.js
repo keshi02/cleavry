@@ -1,63 +1,32 @@
-// Minimal service worker for offline-friendly behaviour.
+// Self-unregistering kill-switch.
 //
-// Strategy: cache-first for the app shell (eraser.html + manifest), with
-// stale-while-revalidate behaviour for everything else (AI model files,
-// JSZip CDN, transformers.js CDN). The huge AI weights are the most
-// painful to re-fetch, so we explicitly cache them on first hit.
+// An earlier version of this service worker cached `eraser.html` and
+// served it for any request that didn't match the SHELL list — which
+// silently broke the new /en and /ja landing pages, sending those
+// URLs to the editor instead. PWA / offline support is disabled for
+// now until the caching strategy is rewritten properly.
 //
-// Bump CACHE_VERSION to force a refresh on next load.
-
-const CACHE_VERSION = 'v1';
-const SHELL = 'eraser-shell-' + CACHE_VERSION;
-const RUNTIME = 'eraser-runtime-' + CACHE_VERSION;
-
-const SHELL_FILES = [
-  './eraser.html',
-  './manifest.webmanifest',
-];
+// Existing users who already have the old SW registered will pick
+// this file up on next visit, drop every cache, unregister
+// themselves, and reload — leaving a clean no-SW state.
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(SHELL).then(cache => cache.addAll(SHELL_FILES))
-      .then(() => self.skipWaiting())
-  );
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(k => k !== SHELL && k !== RUNTIME).map(k => caches.delete(k))
-    )).then(() => self.clients.claim())
-  );
+  event.waitUntil((async () => {
+    // Drop every cache this origin has accumulated.
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => caches.delete(k)));
+    // Unregister this SW from the browser.
+    await self.registration.unregister();
+    // Force any open tabs to reload so they pick up the no-SW state.
+    const clients = await self.clients.matchAll({ type: 'window' });
+    for (const client of clients) client.navigate(client.url);
+  })());
 });
 
-self.addEventListener('fetch', event => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
-
-  // App shell: cache-first.
-  if (SHELL_FILES.some(p => req.url.endsWith(p.replace('./', '')))) {
-    event.respondWith(
-      caches.match(req).then(r => r || fetch(req).then(resp => {
-        const copy = resp.clone();
-        caches.open(SHELL).then(c => c.put(req, copy));
-        return resp;
-      }))
-    );
-    return;
-  }
-
-  // Everything else: stale-while-revalidate via runtime cache.
-  event.respondWith(
-    caches.open(RUNTIME).then(cache =>
-      cache.match(req).then(cached => {
-        const networkFetch = fetch(req).then(resp => {
-          // Don't cache opaque error responses.
-          if (resp && resp.status === 200) cache.put(req, resp.clone());
-          return resp;
-        }).catch(() => cached);
-        return cached || networkFetch;
-      })
-    )
-  );
-});
+// Fall through to the network for everything; we don't want to cache
+// anything during the cleanup window.
+self.addEventListener('fetch', () => { /* no-op */ });

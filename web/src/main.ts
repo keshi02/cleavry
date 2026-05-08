@@ -1564,13 +1564,19 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) resetTransientState();
 });
 
-// PWA: register the service worker for offline / install support. Skipped
-// when we're loaded via file:// (sw can't run in that protocol).
-if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  navigator.serviceWorker.register('sw.js').catch(err => {
-    console.warn('Service worker registration failed:', err);
-  });
-}
+// PWA disabled for now. The previous service worker cached
+// `eraser.html` and served it as a catch-all, which started
+// hijacking /en and /ja once those landing pages shipped. Until the
+// caching strategy is redesigned to understand multi-page routing,
+// we don't register anything.
+//
+// Note: existing users who already have the old SW will fetch the
+// new (kill-switch) sw.js on their next visit anyway — the browser
+// re-checks SW updates on every page load. So we don't need to
+// register here just to push the kill switch.
+//
+// To bring PWA back later, re-introduce a registration here AND
+// rewrite public/sw.js to handle multi-page caching properly.
 
 // Cmd/Ctrl+V — paste an image from the clipboard. Pairs naturally with
 // "download from remove.bg → paste here to fix it up".
