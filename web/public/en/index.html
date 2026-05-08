@@ -403,6 +403,46 @@
   @media (prefers-reduced-motion: reduce) {
     .demo-out figure { opacity: 1; transform: none; animation: none; }
   }
+
+  /* How-to numbered steps */
+  .steps {
+    counter-reset: step;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .steps li {
+    counter-increment: step;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 20px 20px 56px;
+    position: relative;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 16px;
+    top: 18px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 600;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .steps li b { color: var(--accent); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -492,6 +532,47 @@
       </tr>
     </tbody>
   </table>
+</section>
+
+<section id="use-cases">
+  <h2>Where it fits</h2>
+  <div class="feature-grid">
+    <div class="feature">
+      <h3>E-commerce product photos</h3>
+      <p>Strip product backgrounds in one click. If a single shot contains multiple items, Separate-save exports each piece as its own transparent PNG.</p>
+    </div>
+    <div class="feature">
+      <h3>App icons &amp; thumbnails</h3>
+      <p>Cut out characters or logos and export them as background-agnostic transparent PNGs for profile pictures, YouTube thumbnails, or app stores.</p>
+    </div>
+    <div class="feature">
+      <h3>Slides &amp; documents</h3>
+      <p>Make embeds in PowerPoint, Keynote, Notion, or Google Slides visually consistent by removing distracting backgrounds.</p>
+    </div>
+    <div class="feature">
+      <h3>Sticker / emoji packs</h3>
+      <p>Per-component separation plus edge feathering produce clean per-piece sticker PNGs ready for Telegram, LINE, or Slack uploads.</p>
+    </div>
+    <div class="feature">
+      <h3>Privacy-sensitive shoots</h3>
+      <p>All processing happens in your browser; nothing is uploaded. Safe for confidential assets, NDA-bound material, or personal photos.</p>
+    </div>
+    <div class="feature">
+      <h3>Batch cleanup</h3>
+      <p>Combine auto-cleanup with the connected-component threshold to clear AI leftovers and tiny specks in one pass.</p>
+    </div>
+  </div>
+</section>
+
+<section id="how-to">
+  <h2>How it works</h2>
+  <ol class="steps">
+    <li><b>Drop your image:</b> drag a PNG or JPG into the canvas. Nothing is uploaded.</li>
+    <li><b>Remove the background:</b> click "AI background removal". BiRefNet runs locally on WebGPU and isolates the subject.</li>
+    <li><b>Touch up by hand:</b> use the eraser, restore brush, or magic wand to fix anything the AI got wrong.</li>
+    <li><b>Save as transparent PNG:</b> hit "Save" to download the result. WebP and JPEG are also available.</li>
+    <li><b>Split into pieces:</b> if you want each subject as its own file, click "Separate", pick the components you want, and download a ZIP of individual PNGs.</li>
+  </ol>
 </section>
 
 <section>

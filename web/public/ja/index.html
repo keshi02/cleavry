@@ -391,6 +391,46 @@
   @media (prefers-reduced-motion: reduce) {
     .demo-out figure { opacity: 1; transform: none; animation: none; }
   }
+
+  /* How-to numbered steps */
+  .steps {
+    counter-reset: step;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .steps li {
+    counter-increment: step;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 20px 20px 56px;
+    position: relative;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 16px;
+    top: 18px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 600;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .steps li b { color: var(--accent); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -480,6 +520,47 @@
       </tr>
     </tbody>
   </table>
+</section>
+
+<section id="use-cases">
+  <h2>こんな場面で使えます</h2>
+  <div class="feature-grid">
+    <div class="feature">
+      <h3>EC・物販の商品写真</h3>
+      <p>商品写真の背景を 1 クリックで除去。同じ画像に複数アイテムが写っていても、分離保存で 1 個ずつ別の PNG として書き出せます。</p>
+    </div>
+    <div class="feature">
+      <h3>アイコン・サムネイル制作</h3>
+      <p>キャラクターやロゴを切り抜いて、配色を選ばない透過 PNG に。SNS のプロフィール画像や YouTube サムネイル制作に。</p>
+    </div>
+    <div class="feature">
+      <h3>資料・スライド画像</h3>
+      <p>PowerPoint / Keynote / Notion / Google Slides に貼る画像から不要な背景を消し、見栄えを統一できます。</p>
+    </div>
+    <div class="feature">
+      <h3>ステッカー・LINE スタンプ</h3>
+      <p>連結成分単位の分離保存と縁ぼかしで、画像内の複数オブジェクトを別々の PNG ステッカーとして書き出せます。</p>
+    </div>
+    <div class="feature">
+      <h3>機密性の高い画像</h3>
+      <p>すべての処理がブラウザ内で完結し、画像はサーバーに送信されません。社外秘の素材や個人写真でも安心して使えます。</p>
+    </div>
+    <div class="feature">
+      <h3>大量バッチの下処理</h3>
+      <p>自動ノイズ除去や閾値指定の自動 cleanup を組み合わせ、AI が残した小さな消し残しを一括で除去できます。</p>
+    </div>
+  </div>
+</section>
+
+<section id="how-to">
+  <h2>使い方（基本フロー）</h2>
+  <ol class="steps">
+    <li><b>画像を読み込み：</b>PNG / JPG をブラウザにドラッグ＆ドロップ。クラウドにはアップロードされません。</li>
+    <li><b>AI で背景除去：</b>「AI 背景除去」ボタンを押すと、WebGPU 上で BiRefNet が動作し、被写体だけを残します。</li>
+    <li><b>手動で仕上げ：</b>消しゴム・復元ブラシ・マジックワンドで、AI が誤って削った部分を戻したり、残ってしまった背景を消したり。</li>
+    <li><b>透過 PNG として保存：</b>「保存」ボタンで通常の透過 PNG をダウンロード。WebP / JPEG にも切り替え可能です。</li>
+    <li><b>分離して個別ファイルに：</b>画像内の複数のオブジェクトを 1 個ずつの PNG にしたい場合は「分離保存」→ 残す成分を選んで ZIP ダウンロード。</li>
+  </ol>
 </section>
 
 <section>
