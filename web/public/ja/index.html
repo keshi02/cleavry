@@ -196,6 +196,115 @@
   }
   footer a { color: var(--muted); margin: 0 8px; }
   footer a:hover { color: var(--accent); }
+
+  /* Demo: original → 3 separated candies, sequential fade-in */
+  .demo {
+    padding-top: 0;
+  }
+  .demo-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 24px 24px;
+  }
+  .demo-eyebrow {
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    margin: 0 0 4px;
+  }
+  .demo-title {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 22px;
+  }
+  .demo-title b { color: var(--accent); font-weight: 600; }
+  .demo-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.3fr);
+    gap: 18px;
+    align-items: center;
+  }
+  .demo-frame {
+    aspect-ratio: 1 / 1;
+    border-radius: 10px;
+    background: var(--panel-hi);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .demo-frame img { width: 100%; height: 100%; object-fit: contain; }
+  .demo-arrow {
+    color: var(--muted);
+    font-size: 22px;
+    user-select: none;
+  }
+  .demo-out {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .demo-out figure {
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background:
+      linear-gradient(45deg, #f0f0f0 25%, transparent 25%) 0 0 / 12px 12px,
+      linear-gradient(-45deg, #f0f0f0 25%, transparent 25%) 0 6px / 12px 12px,
+      linear-gradient(45deg, transparent 75%, #f0f0f0 75%) 6px -6px / 12px 12px,
+      linear-gradient(-45deg, transparent 75%, #f0f0f0 75%) -6px 0 / 12px 12px,
+      #ffffff;
+    opacity: 0;
+    transform: scale(0.92);
+    animation: demoFadeIn 6s ease-in-out infinite;
+  }
+  .demo-out figure:nth-child(1) { animation-delay: 0.4s; }
+  .demo-out figure:nth-child(2) { animation-delay: 1.2s; }
+  .demo-out figure:nth-child(3) { animation-delay: 2.0s; }
+  .demo-out img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    padding: 6px;
+  }
+  .demo-out figcaption {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    padding: 4px 4px 6px;
+    border-top: 1px solid var(--border);
+    background: #fff;
+  }
+  .demo-note {
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    margin: 18px 0 0;
+  }
+  @keyframes demoFadeIn {
+    0%        { opacity: 0; transform: scale(0.92) translateY(6px); }
+    10%, 70%  { opacity: 1; transform: scale(1) translateY(0); }
+    85%, 100% { opacity: 0; transform: scale(0.92) translateY(6px); }
+  }
+  @media (max-width: 640px) {
+    .demo-stage {
+      grid-template-columns: 1fr;
+    }
+    .demo-arrow {
+      transform: rotate(90deg);
+      justify-self: center;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .demo-out figure { opacity: 1; transform: none; animation: none; }
+  }
 </style>
 </head>
 <body>
@@ -216,6 +325,34 @@
   </p>
   <div class="cta-row">
     <a class="cta" href="/?lang=ja">今すぐ Cleavry を試す →</a>
+  </div>
+</section>
+
+<section class="demo" aria-label="背景除去と分離保存のデモ">
+  <div class="demo-card">
+    <p class="demo-eyebrow">DEMO</p>
+    <h2 class="demo-title">背景を消すだけじゃない。<b>つながった要素を 1 クリックで個別 PNG に。</b></h2>
+    <div class="demo-stage">
+      <div class="demo-frame" aria-hidden="true">
+        <img src="/lp/original.webp" alt="" width="720" height="648" loading="lazy" decoding="async">
+      </div>
+      <div class="demo-arrow" aria-hidden="true">→</div>
+      <div class="demo-out" aria-hidden="true">
+        <figure>
+          <img src="/lp/candy3.webp" alt="" loading="lazy" decoding="async">
+          <figcaption>candy_1.png</figcaption>
+        </figure>
+        <figure>
+          <img src="/lp/candy2.webp" alt="" loading="lazy" decoding="async">
+          <figcaption>candy_2.png</figcaption>
+        </figure>
+        <figure>
+          <img src="/lp/candy1.webp" alt="" loading="lazy" decoding="async">
+          <figcaption>candy_3.png</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="demo-note">分離保存ボタンで、連結した要素を選んでまとめて ZIP 出力できます。</p>
   </div>
 </section>
 
