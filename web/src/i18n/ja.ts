@@ -47,7 +47,7 @@ export default {
   'tip.autosave': '編集をブラウザ内に自動保存。再読み込み時に復元できます。\nOFF にすると保存済みデータも削除されます',
   'tip.showOrig': '元画像を半透明で重ねて表示（削られた領域の確認用）',
   'tip.origOpacity': '元画像オーバーレイの透明度（0〜100%）',
-  'tip.feather': '保存時に縁をぼかして毛先のジャギーを軽減\nON にしておくと「保存」「分離保存」の出力に自動適用\n（プレビュー画面には反映されません）',
+  'tip.feather': '保存時に縁をぼかしてジャギーを軽減\nON にしておくと出力に自動適用\n（プレビュー画面には反映されません）',
   'tip.featherStrength': '縁ぼかしの強度（1〜3px）',
   'tip.toolErase': '消しゴム (E)',
   'tip.toolRestore': '復元 (R)',
@@ -63,7 +63,6 @@ export default {
   'tip.themeLight': 'テーマ：ライト（クリックでダークに切替）',
   'tip.themeDark': 'テーマ：ダーク（クリックでシステムに切替）',
   'tip.help': 'ショートカット一覧 (?)',
-  'tip.lang': '言語切替',
 
   // Theme labels
   'theme.system': 'システム',
@@ -163,5 +162,4 @@ export default {
   'help.legal.privacy': 'プライバシーポリシー',
   'help.legal.terms': '利用規約',
   'help.legal.contact': 'お問い合わせ',
-  'help.legal.langSwitch': 'English',
 };

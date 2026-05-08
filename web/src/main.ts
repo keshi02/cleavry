@@ -23,7 +23,12 @@ import { magicWandAt as runMagicWand, cancelWand, isWandRunning } from './tools/
 import { detectComponents, SEPARATE_MIN_AREA } from './components/connected';
 import { showProgress, updateProgress, hideProgress, setProgressTitle } from './ui/progress';
 import { showError } from './ui/error';
-import { t, applyI18n, getLang, setLang } from './i18n';
+import { t, applyI18n, setLang } from './i18n';
+
+// Expose the language switcher on window for dev / testing only.
+// Run `cleavry.setLang('en')` in the browser Console to override the
+// auto-detected language. There is no user-facing UI for this.
+(window as any).cleavry = { setLang };
 import { initHistory, pushUndo, undo, redoFn } from './persist/history';
 import {
   canvas, ctx, canvasWrap, workspace, cursor, rectOverlay,
@@ -1129,16 +1134,9 @@ function bindUI() {
     };
   });
   $('theme-btn').onclick = cycleTheme;
-  // Language toggle. Button label always shows the *other* language.
-  const langBtn = $('lang-btn');
-  if (langBtn) {
-    const paintLangBtn = () => {
-      langBtn.textContent = getLang() === 'ja' ? 'EN' : 'JA';
-    };
-    paintLangBtn();
-    window.addEventListener('langchange', paintLangBtn);
-    langBtn.onclick = () => setLang(getLang() === 'ja' ? 'en' : 'ja');
-  }
+  // i18n.setLang() / getLang() remain importable for dev / testing
+  // (run `setLang('en')` from the Console if you need to override).
+  // No user-facing UI: navigator.language detection handles 99% of cases.
   $('help-overlay').onclick = e => {
     // Click outside the box closes
     if (e.target.id === 'help-overlay') e.target.classList.remove('show');
