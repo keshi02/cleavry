@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cleavry — Transparency editor in your browser</title>
-<meta name="description" content="Free, in-browser image transparency editor with AI background removal. Your images never leave your device. No ads, no signup, no usage limits.">
+<title>Free Background Remover & PNG Cutout Tool — Browser-Only · Cleavry</title>
+<meta name="description" content="Remove image backgrounds with AI, refine with eraser/restore brushes, and split connected components into individual PNGs. Free, no signup, no upload — runs entirely in your browser.">
+<meta name="keywords" content="background remover,remove background,transparent png,png cutout,image cutout,free,online,browser,component separation,connected components">
 <link rel="canonical" href="https://cleavry.com/en/">
 <link rel="alternate" hreflang="ja" href="https://cleavry.com/ja/">
 <link rel="alternate" hreflang="en" href="https://cleavry.com/en/">
@@ -13,16 +14,101 @@
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://cleavry.com/en">
-<meta property="og:title" content="Cleavry — Transparency editor in your browser">
-<meta property="og:description" content="Free in-browser AI background removal + manual touchups. Your images never leave your device.">
+<meta property="og:url" content="https://cleavry.com/en/">
+<meta property="og:title" content="Free Background Remover & PNG Cutout Tool — Cleavry">
+<meta property="og:description" content="Remove backgrounds with AI and split connected components into individual PNGs. Free, no signup, no upload — your image stays on your device.">
+<meta property="og:image" content="https://cleavry.com/lp/og-en.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Cleavry — free in-browser background remover and PNG component splitter">
 <meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="ja_JP">
 <meta property="og:site_name" content="Cleavry">
 
 <!-- Twitter Card -->
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Cleavry">
-<meta name="twitter:description" content="Free in-browser AI background removal. Your images never leave your device.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Free Background Remover & PNG Cutout Tool — Cleavry">
+<meta name="twitter:description" content="Remove backgrounds with AI and split connected components into individual PNGs. Free, no signup, no upload — runs entirely in your browser.">
+<meta name="twitter:image" content="https://cleavry.com/lp/og-en.png">
+<meta name="twitter:image:alt" content="Cleavry — free in-browser background remover and PNG component splitter">
+
+<!-- Structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://cleavry.com/#webapp",
+      "name": "Cleavry",
+      "url": "https://cleavry.com/",
+      "inLanguage": "en",
+      "applicationCategory": "MultimediaApplication",
+      "applicationSubCategory": "Image Editor",
+      "operatingSystem": "Any (Web)",
+      "browserRequirements": "Requires WebGPU for AI background removal (Chrome, Edge, Firefox).",
+      "description": "An in-browser transparency editor with AI background removal, eraser/restore brushes, and connected-component splitting. Images stay on the user's device.",
+      "image": "https://cleavry.com/lp/og-en.png",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock"
+      },
+      "featureList": [
+        "AI background removal (BiRefNet, WebGPU)",
+        "Eraser / restore brushes",
+        "Magic wand (one-click contiguous-color removal)",
+        "Rectangular selection",
+        "Noise cleanup / auto-cleanup",
+        "Separate-save (split connected components into individual PNGs as a ZIP)",
+        "Edge feathering",
+        "Original-image overlay for comparison",
+        "Auto-save via IndexedDB"
+      ],
+      "isAccessibleForFree": true
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://cleavry.com/en/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is this really free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, free forever. No ads, no trackers, no paid tier today. If a Pro tier ever exists, today's features stay free."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where are my images sent?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nowhere. Every operation, including AI inference, runs on your device. There is no upload pipeline at all."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is the first AI run slow?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The AI model (~470MB) is downloaded once on first use and cached in your browser. Subsequent runs start instantly."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which browsers are supported?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "AI background removal needs a WebGPU-capable browser (recent Chrome, Edge, or Firefox). Safari can use the manual editing tools but not the AI step."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
 
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236c7eff%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M21%2012a9%209%200%201%201-9-9%22%2F%3E%3Cpath%20d%3D%22m17%208-5%204%2C0%200%200%200%22%2F%3E%3C%2Fsvg%3E">
 

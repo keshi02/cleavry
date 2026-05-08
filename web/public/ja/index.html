@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cleavry — ブラウザで完結する透過処理エディタ</title>
-<meta name="description" content="ブラウザ上で動く画像透過処理エディタ。AI 背景除去と手動仕上げをすべてあなたの端末で。広告なし、登録不要、利用回数無制限。">
+<title>背景透過・PNG切り抜きを無料で｜ブラウザ完結の透過処理エディタ - Cleavry</title>
+<meta name="description" content="AIで画像の背景を自動透過、消しゴム・復元ブラシで仕上げ、つながった要素を分離して個別のPNGとして保存。登録不要・広告なし・利用回数無制限。画像はあなたのブラウザから外に出ません。">
+<meta name="keywords" content="背景透過,背景除去,PNG切り抜き,画像切り抜き,透過PNG,無料,ブラウザ,オンライン,分離保存,連結成分">
 <link rel="canonical" href="https://cleavry.com/ja/">
 <link rel="alternate" hreflang="ja" href="https://cleavry.com/ja/">
 <link rel="alternate" hreflang="en" href="https://cleavry.com/en/">
@@ -13,16 +14,101 @@
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://cleavry.com/ja">
-<meta property="og:title" content="Cleavry — ブラウザで完結する透過処理エディタ">
-<meta property="og:description" content="AI 背景除去 + 手動仕上げをブラウザ内で。画像は外部に送信されません。">
+<meta property="og:url" content="https://cleavry.com/ja/">
+<meta property="og:title" content="背景透過・PNG切り抜きを無料で｜ブラウザ完結 - Cleavry">
+<meta property="og:description" content="AIで背景を自動透過し、つながった要素を分離して個別PNGに。登録不要・広告なし・利用回数無制限。画像は端末から外に出ません。">
+<meta property="og:image" content="https://cleavry.com/lp/og-ja.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Cleavry — ブラウザで完結する背景透過・分離保存ツール">
 <meta property="og:locale" content="ja_JP">
+<meta property="og:locale:alternate" content="en_US">
 <meta property="og:site_name" content="Cleavry">
 
 <!-- Twitter Card -->
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Cleavry">
-<meta name="twitter:description" content="ブラウザ完結の透過処理エディタ。画像は外部送信されません。">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="背景透過・PNG切り抜きを無料で｜Cleavry">
+<meta name="twitter:description" content="AIで背景を自動透過、つながった要素を分離して個別PNGに。登録不要・広告なし・利用回数無制限。">
+<meta name="twitter:image" content="https://cleavry.com/lp/og-ja.png">
+<meta name="twitter:image:alt" content="Cleavry — ブラウザで完結する背景透過・分離保存ツール">
+
+<!-- Structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://cleavry.com/#webapp",
+      "name": "Cleavry",
+      "url": "https://cleavry.com/",
+      "inLanguage": "ja",
+      "applicationCategory": "MultimediaApplication",
+      "applicationSubCategory": "Image Editor",
+      "operatingSystem": "Any (Web)",
+      "browserRequirements": "Requires WebGPU for AI background removal (Chrome, Edge, Firefox).",
+      "description": "ブラウザ上で動く画像透過処理エディタ。AI による背景除去、消しゴム・復元ブラシでの手動仕上げ、連結成分の分離保存に対応。画像は端末外に送信されません。",
+      "image": "https://cleavry.com/lp/og-ja.png",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "JPY",
+        "availability": "https://schema.org/InStock"
+      },
+      "featureList": [
+        "AI 背景除去 (BiRefNet, WebGPU)",
+        "消しゴム / 復元ブラシ",
+        "マジックワンド (連続同色の一括透過)",
+        "矩形範囲指定",
+        "ノイズ削除 / 自動ノイズ除去",
+        "分離保存 (連結成分を個別 PNG として ZIP 出力)",
+        "縁ぼかし",
+        "元画像比較オーバーレイ",
+        "IndexedDB による自動保存"
+      ],
+      "isAccessibleForFree": true
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://cleavry.com/ja/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "本当に無料ですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "はい、永続的に無料です。広告もトラッカーもありません。現時点で有料プランはありません。将来 Pro プランを追加する場合も、現在の機能はそのまま無料で使えます。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "私の画像はどこに送られますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "どこにも送られません。AI 推論を含むすべての処理はあなたの端末内で行われます。サーバーへのアップロード機能自体が存在しません。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "初回の AI 処理が遅いのはなぜですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "AI モデル（約 470MB）が初回利用時にダウンロードされ、ブラウザにキャッシュされます。2 回目以降は即座に動作します。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "対応ブラウザは何ですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "AI 背景除去には WebGPU 対応のブラウザ（Chrome、Edge、Firefox の最新版）が必要です。Safari は手動編集機能のみ動作します。"
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
 
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236c7eff%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M21%2012a9%209%200%201%201-9-9%22%2F%3E%3Cpath%20d%3D%22m17%208-5%204%2C0%200%200%200%22%2F%3E%3C%2Fsvg%3E">
 
