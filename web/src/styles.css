@@ -466,6 +466,24 @@
     font-weight: 600;
   }
   #help-box h3:first-of-type { margin-top: 0; }
+  /* Support note in the credits panel. Sits above the dl with a subtle
+     accent so it reads as friendly, not pushy. */
+  #help-box .support-note {
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  #help-box .support-note a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  #help-box .support-note a:hover { text-decoration: underline; }
 
   /* Help category tabs. Section visibility is driven by [data-help-tab]
      on #help-box; only the matching panel is shown. */
