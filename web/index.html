@@ -74,34 +74,34 @@
       Cleavry
     </div>
     <div class="group">
-      <button id="open-btn" class="icon-btn-text" aria-label="画像を開く" data-tip="画像を開く (Cmd+O)"><svg><use href="#i-folder-open"/></svg> 開く</button>
+      <button id="open-btn" class="icon-btn-text" data-i18n-aria="btn.open" data-i18n-tip="tip.open"><svg><use href="#i-folder-open"/></svg> <span data-i18n="btn.open">開く</span></button>
       <input type="file" id="file-input" accept="image/png,image/jpeg" hidden>
-      <button id="ai-bg-btn" class="icon-btn-text" aria-label="AI 背景除去" data-tip="ブラウザ内 AI で自動背景除去（API 不要・画像は外部送信なし）&#10;対応ブラウザ推奨（Chrome / Edge / Firefox）&#10;初回のみ ~470MB のダウンロード、以降は端末に保存" disabled><svg><use href="#i-sparkles"/></svg> AI 背景除去</button>
-      <button id="ai-input-btn" class="icon-btn-text" aria-label="AI 出力を読み込み" data-tip="読み込んだ元画像を透過処理した画像を取り込み&#10;元画像は保持され、復元ブラシ／復元ワンドで消えた部分を取り戻せます" disabled hidden><svg><use href="#i-file-down"/></svg> AI出力読込</button>
+      <button id="ai-bg-btn" class="icon-btn-text" data-i18n-aria="btn.aiBg" data-i18n-tip="tip.aiBg" disabled><svg><use href="#i-sparkles"/></svg> <span data-i18n="btn.aiBg">AI 背景除去</span></button>
+      <button id="ai-input-btn" class="icon-btn-text" data-i18n-aria="btn.aiInput" data-i18n-tip="tip.aiInput" disabled hidden><svg><use href="#i-file-down"/></svg> <span data-i18n="btn.aiInput">AI出力読込</span></button>
       <input type="file" id="ai-file-input" accept="image/png,image/jpeg" hidden>
-      <button id="save-btn" class="icon-btn-text" aria-label="保存" data-tip="現在のフォーマットで保存 (Cmd+S)" disabled><svg><use href="#i-download"/></svg> 保存</button>
-      <select id="save-format" data-tip="出力フォーマット&#10;PNG: 可逆・透過対応&#10;WebP: 圧縮率良・透過対応&#10;JPEG: 透過なし・最小サイズ" disabled hidden>
+      <button id="save-btn" class="icon-btn-text" data-i18n-aria="btn.save" data-i18n-tip="tip.save" disabled><svg><use href="#i-download"/></svg> <span data-i18n="btn.save">保存</span></button>
+      <select id="save-format" data-i18n-tip="tip.saveFormat" disabled hidden>
         <option value="png" selected>PNG</option>
         <option value="webp">WebP</option>
         <option value="jpeg">JPEG</option>
       </select>
-      <button id="separate-btn" class="icon-btn-text" aria-label="分離保存" data-tip="つながった要素を選んで個別 PNG として保存" disabled hidden><svg><use href="#i-scissors"/></svg> 分離保存</button>
-      <button id="cleanup-btn" class="icon-btn-text" aria-label="ノイズ削除" data-tip="つながった要素を表示し、選んだもの以外を一括削除（消し残し・ノイズ除去）" disabled><svg><use href="#i-wind"/></svg> ノイズ削除</button>
-      <button id="auto-cleanup-btn" class="icon-btn-text" aria-label="自動ノイズ除去" data-tip="ワンタップ実行：右の設定サイズ以下の小さな要素を確認なしで一括削除&#10;Undo で取り消し可能" disabled><svg><use href="#i-wand"/></svg> 自動ノイズ除去</button>
-      <label data-tip="自動ノイズ除去で削除する最小サイズ（px²）">≤ <input type="number" id="auto-cleanup-threshold" min="1" max="2000" value="16"> px²</label>
-      <label data-tip="ON: 元画像と同じサイズ・位置で保存（重ねると元の絵に戻る） / OFF: 中身のある部分だけ切り抜き">
-        <input type="checkbox" id="preserve-canvas-toggle" checked> <svg class="lucide-inline"><use href="#i-frame"/></svg>元キャンバス保持
+      <button id="separate-btn" class="icon-btn-text" data-i18n-aria="btn.separate" data-i18n-tip="tip.separate" disabled hidden><svg><use href="#i-scissors"/></svg> <span data-i18n="btn.separate">分離保存</span></button>
+      <button id="cleanup-btn" class="icon-btn-text" data-i18n-aria="btn.cleanup" data-i18n-tip="tip.cleanup" disabled><svg><use href="#i-wind"/></svg> <span data-i18n="btn.cleanup">ノイズ削除</span></button>
+      <button id="auto-cleanup-btn" class="icon-btn-text" data-i18n-aria="btn.autoCleanup" data-i18n-tip="tip.autoCleanup" disabled><svg><use href="#i-wand"/></svg> <span data-i18n="btn.autoCleanup">自動ノイズ除去</span></button>
+      <label data-i18n-tip="tip.autoCleanupThreshold"><span data-i18n="label.threshold">≤</span> <input type="number" id="auto-cleanup-threshold" min="1" max="2000" value="16"> <span data-i18n="label.thresholdSuffix">px²</span></label>
+      <label data-i18n-tip="tip.preserve">
+        <input type="checkbox" id="preserve-canvas-toggle" checked> <svg class="lucide-inline"><use href="#i-frame"/></svg><span data-i18n="label.preserve">元キャンバス保持</span>
       </label>
-      <label data-tip="編集をブラウザ内に自動保存。再読み込み時に復元できます。&#10;OFF にすると保存済みデータも削除されます">
-        <input type="checkbox" id="autosave-toggle" checked> <svg class="lucide-inline"><use href="#i-hard-drive"/></svg>自動保存
+      <label data-i18n-tip="tip.autosave">
+        <input type="checkbox" id="autosave-toggle" checked> <svg class="lucide-inline"><use href="#i-hard-drive"/></svg><span data-i18n="label.autosave">自動保存</span>
       </label>
     </div>
 
     <div class="group">
-      <button id="show-orig-btn" class="icon-btn-text" aria-label="元画像比較" data-tip="元画像を半透明で重ねて表示（削られた領域の確認用）" disabled><svg><use href="#i-eye"/></svg> 元画像比較</button>
-      <input type="range" id="orig-opacity" min="0" max="100" value="35" data-tip="元画像オーバーレイの透明度（0〜100%）" disabled>
-      <button id="feather-btn" class="icon-btn-text" aria-label="縁ぼかし" data-tip="保存時に縁をぼかして毛先のジャギーを軽減&#10;ON にしておくと「保存」「分離保存」の出力に自動適用&#10;（プレビュー画面には反映されません）" disabled><svg><use href="#i-feather"/></svg> 縁ぼかし</button>
-      <select id="feather-strength" data-tip="縁ぼかしの強度（1〜3px）" disabled>
+      <button id="show-orig-btn" class="icon-btn-text" data-i18n-aria="btn.showOrig" data-i18n-tip="tip.showOrig" disabled><svg><use href="#i-eye"/></svg> <span data-i18n="btn.showOrig">元画像比較</span></button>
+      <input type="range" id="orig-opacity" min="0" max="100" value="35" data-i18n-tip="tip.origOpacity" disabled>
+      <button id="feather-btn" class="icon-btn-text" data-i18n-aria="btn.feather" data-i18n-tip="tip.feather" disabled><svg><use href="#i-feather"/></svg> <span data-i18n="btn.feather">縁ぼかし</span></button>
+      <select id="feather-strength" data-i18n-tip="tip.featherStrength" disabled>
         <option value="1">1px</option>
         <option value="2">2px</option>
         <option value="3">3px</option>
@@ -109,55 +109,56 @@
     </div>
 
     <div class="group">
-      <label>ツール:</label>
+      <label data-i18n="label.tool">ツール:</label>
       <div class="tool-btns">
-        <button data-tool="erase"       class="tool-btn icon-btn-text active" aria-label="消しゴム" data-tip="消しゴム (E)"><svg><use href="#i-eraser"/></svg> 消しゴム</button>
-        <button data-tool="restore"     class="tool-btn icon-btn-text"        aria-label="復元"     data-tip="復元 (R)"><svg><use href="#i-paintbrush"/></svg> 復元</button>
-        <button data-tool="wand"        class="tool-btn icon-btn-text"        aria-label="マジックワンド" data-tip="マジックワンド (W)"><svg><use href="#i-wand-sparkles"/></svg> ワンド</button>
-        <button data-tool="restoreWand" class="tool-btn icon-btn-text"        aria-label="復元ワンド" data-tip="復元ワンド (Shift+W) — 元画像の連続同色を一括復元"><svg><use href="#i-rewind"/></svg> 復元ワンド</button>
-        <button data-tool="rectSelect"  class="tool-btn icon-btn-text"        aria-label="矩形範囲" data-tip="矩形範囲を指定してワンドの対象を制限"><svg><use href="#i-square-dashed"/></svg> 範囲</button>
+        <button data-tool="erase"       class="tool-btn icon-btn-text active" data-i18n-aria="tool.erase" data-i18n-tip="tip.toolErase"><svg><use href="#i-eraser"/></svg> <span data-i18n="tool.erase">消しゴム</span></button>
+        <button data-tool="restore"     class="tool-btn icon-btn-text"        data-i18n-aria="tool.restore" data-i18n-tip="tip.toolRestore"><svg><use href="#i-paintbrush"/></svg> <span data-i18n="tool.restore">復元</span></button>
+        <button data-tool="wand"        class="tool-btn icon-btn-text"        data-i18n-aria="tool.wand" data-i18n-tip="tip.toolWand"><svg><use href="#i-wand-sparkles"/></svg> <span data-i18n="tool.wand">ワンド</span></button>
+        <button data-tool="restoreWand" class="tool-btn icon-btn-text"        data-i18n-aria="tool.restoreWand" data-i18n-tip="tip.toolRestoreWand"><svg><use href="#i-rewind"/></svg> <span data-i18n="tool.restoreWand">復元ワンド</span></button>
+        <button data-tool="rectSelect"  class="tool-btn icon-btn-text"        data-i18n-aria="tool.rect" data-i18n-tip="tip.toolRect"><svg><use href="#i-square-dashed"/></svg> <span data-i18n="tool.rect">範囲</span></button>
       </div>
-      <div id="rect-controls" data-tip="ワンドの適用範囲。矩形を引いた状態で「内側のみ」「外側のみ」を切替">
-        <label><input type="radio" name="rect-mode" value="inside" checked> 内側</label>
-        <label><input type="radio" name="rect-mode" value="outside"> 外側</label>
+      <div id="rect-controls" data-i18n-tip="tip.rectControls">
+        <label><input type="radio" name="rect-mode" value="inside" checked> <span data-i18n="label.rectInside">内側</span></label>
+        <label><input type="radio" name="rect-mode" value="outside"> <span data-i18n="label.rectOutside">外側</span></label>
       </div>
     </div>
 
     <div class="row-break"></div>
 
     <div class="group">
-      <label>サイズ:</label>
+      <label data-i18n="label.size">サイズ:</label>
       <input type="range" id="size-slider" min="1" max="300" value="40">
       <span id="size-display" class="num-display">40</span>
     </div>
 
     <div class="group">
-      <label>硬度:</label>
+      <label data-i18n="label.hardness">硬度:</label>
       <input type="range" id="hardness-slider" min="0" max="100" value="70">
       <span id="hardness-display" class="num-display">70</span>
     </div>
 
     <div class="group">
-      <label>色許容度:</label>
+      <label data-i18n="label.tolerance">色許容度:</label>
       <input type="range" id="tolerance-slider" min="1" max="100" value="20">
       <span id="tolerance-display" class="num-display">20</span>
     </div>
 
     <div class="group">
-      <button id="undo-btn" class="icon-btn" aria-label="元に戻す" data-tip="Undo (Cmd+Z)" disabled><svg><use href="#i-undo-2"/></svg></button>
-      <button id="redo-btn" class="icon-btn" aria-label="やり直す" data-tip="Redo (Cmd+Shift+Z)" disabled><svg><use href="#i-redo-2"/></svg></button>
+      <button id="undo-btn" class="icon-btn" aria-label="Undo" data-i18n-tip="tip.undo" disabled><svg><use href="#i-undo-2"/></svg></button>
+      <button id="redo-btn" class="icon-btn" aria-label="Redo" data-i18n-tip="tip.redo" disabled><svg><use href="#i-redo-2"/></svg></button>
     </div>
 
     <div class="spacer"></div>
 
     <div class="group">
-      <button id="fit-btn" class="icon-btn-text" aria-label="画面に合わせる" data-tip="画面に合わせる (Cmd+0)"><svg><use href="#i-maximize"/></svg> ぴったり</button>
-      <button id="actual-btn" data-tip="100% 表示 (Cmd+1)">100%</button>
+      <button id="fit-btn" class="icon-btn-text" data-i18n-aria="btn.fit" data-i18n-tip="tip.fit"><svg><use href="#i-maximize"/></svg> <span data-i18n="btn.fit">ぴったり</span></button>
+      <button id="actual-btn" data-i18n-tip="tip.actual">100%</button>
     </div>
 
     <div class="group">
-      <button id="theme-btn" data-tip="テーマ切替（システム → ライト → ダーク）">システム</button>
-      <button id="help-btn" class="icon-btn" aria-label="ヘルプ" data-tip="ショートカット一覧 (?)"><svg><use href="#i-help-circle"/></svg></button>
+      <button id="lang-btn" data-i18n-tip="tip.lang">EN</button>
+      <button id="theme-btn">システム</button>
+      <button id="help-btn" class="icon-btn" data-i18n-aria="btn.help" data-i18n-tip="tip.help"><svg><use href="#i-help-circle"/></svg></button>
     </div>
   </div>
 
@@ -190,38 +191,38 @@
       <button id="cleanup-cancel" data-tip="キャンセル (ESC)">キャンセル</button>
     </div>
     <div id="empty-hint">
-      <h2>PNG をドラッグ＆ドロップ</h2>
-      <div>または <code>開く</code> / <code>⌘V</code> でペースト</div>
-      <div style="margin-top: 18px; font-size: 11px;">
+      <h2 data-i18n="empty.title">PNG をドラッグ＆ドロップ</h2>
+      <div data-i18n-html="empty.subtitle">または <code>開く</code> / <code>⌘V</code> でペースト</div>
+      <div style="margin-top: 18px; font-size: 11px;" data-i18n-html="empty.shortcuts">
         ショートカット: <code>E</code>消しゴム / <code>R</code>復元 / <code>W</code>ワンド /
         <code>⇧W</code>復元ワンド / <code>[ ]</code>サイズ /
         <code>Space+ドラッグ</code>パン / <code>ホイール</code>ズーム
       </div>
     </div>
-    <div id="drop-overlay">ここに画像をドロップ</div>
+    <div id="drop-overlay" data-i18n="drop.overlay">ここに画像をドロップ</div>
     <div id="progress-overlay">
       <div id="progress-box">
         <div class="title" id="progress-title">マジックワンド処理中…</div>
         <div id="progress-bar"><div id="progress-fill"></div></div>
-        <div class="hint">ESC キーで中断（変更は破棄されます）</div>
+        <div class="hint" data-i18n="progress.escHint">ESC キーで中断（変更は破棄されます）</div>
       </div>
     </div>
 
     <div id="help-overlay">
       <div id="help-box" data-help-tab="file">
         <h2>
-          ヘルプ
-          <button id="help-close" data-tip="閉じる">×</button>
+          <span data-i18n="help.title">ヘルプ</span>
+          <button id="help-close">×</button>
         </h2>
 
         <div id="help-tabs">
-          <button data-help-target="file" class="active">ファイル</button>
-          <button data-help-target="features">編集機能</button>
-          <button data-help-target="tool">ツール</button>
-          <button data-help-target="brush">ブラシ</button>
-          <button data-help-target="history">履歴</button>
-          <button data-help-target="view">表示</button>
-          <button data-help-target="credits">クレジット</button>
+          <button data-help-target="file" class="active" data-i18n="help.tab.file">ファイル</button>
+          <button data-help-target="features" data-i18n="help.tab.features">編集機能</button>
+          <button data-help-target="tool" data-i18n="help.tab.tool">ツール</button>
+          <button data-help-target="brush" data-i18n="help.tab.brush">ブラシ</button>
+          <button data-help-target="history" data-i18n="help.tab.history">履歴</button>
+          <button data-help-target="view" data-i18n="help.tab.view">表示</button>
+          <button data-help-target="credits" data-i18n="help.tab.credits">クレジット</button>
         </div>
 
         <div class="help-section" data-section="file">
@@ -291,9 +292,9 @@
         <div class="help-section" data-section="credits">
         <h3 style="display:none">クレジット</h3>
         <p class="support-note">
-          Cleavry は完全無料・広告なしで運営しています。気に入ったら
-          <a href="https://buymeacoffee.com/chikubo" target="_blank" rel="noopener noreferrer">☕ Buy Me a Coffee</a>
-          で開発をサポートできます。
+          <span data-i18n="help.support.note">Cleavry は完全無料・広告なしで運営しています。気に入ったら</span>
+          <a href="https://buymeacoffee.com/chikubo" target="_blank" rel="noopener noreferrer" data-i18n="help.support.cta">☕ Buy Me a Coffee</a>
+          <span data-i18n="help.support.suffix">で開発をサポートできます。</span>
         </p>
         <dl>
           <dt>Cleavry</dt><dd>本ツール</dd>
@@ -305,13 +306,11 @@
           <dt>Lucide Icons</dt><dd>ISC License</dd>
         </dl>
         <p class="legal-links">
-          <a href="/privacy" target="_blank" rel="noopener noreferrer">プライバシーポリシー</a>
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" data-i18n="help.legal.privacy">プライバシーポリシー</a>
           ·
-          <a href="/terms" target="_blank" rel="noopener noreferrer">利用規約</a>
+          <a href="/terms" target="_blank" rel="noopener noreferrer" data-i18n="help.legal.terms">利用規約</a>
           ·
-          <a href="mailto:support@cleavry.com">お問い合わせ</a>
-          ·
-          <a href="/en" target="_blank" rel="noopener noreferrer">English</a>
+          <a href="mailto:support@cleavry.com" data-i18n="help.legal.contact">お問い合わせ</a>
         </p>
         </div>
       </div>
@@ -319,7 +318,7 @@
   </div>
 
   <div id="status">
-    <span class="filename" id="filename-status">画像未読込</span>
+    <span class="filename" id="filename-status" data-i18n="status.empty">画像未読込</span>
     <span id="size-status"></span>
     <span id="zoom-status"></span>
     <span id="tool-status">消しゴム</span>

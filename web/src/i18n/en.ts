@@ -1,0 +1,167 @@
+// English dictionary. Keys must match `ja.ts` exactly.
+export default {
+  // Toolbar buttons
+  'btn.open': 'Open',
+  'btn.aiBg': 'AI BG removal',
+  'btn.aiInput': 'Load AI output',
+  'btn.save': 'Save',
+  'btn.separate': 'Separate',
+  'btn.cleanup': 'Noise cleanup',
+  'btn.autoCleanup': 'Auto cleanup',
+  'btn.showOrig': 'Show original',
+  'btn.feather': 'Feather',
+  'btn.fit': 'Fit',
+  'btn.actual': '100%',
+  'btn.help': 'Help',
+
+  // Tool buttons
+  'tool.erase': 'Eraser',
+  'tool.restore': 'Restore',
+  'tool.wand': 'Wand',
+  'tool.restoreWand': 'Restore wand',
+  'tool.rect': 'Rect',
+
+  // Toggles & labels
+  'label.preserve': 'Preserve canvas',
+  'label.autosave': 'Auto-save',
+  'label.tool': 'Tool:',
+  'label.size': 'Size:',
+  'label.hardness': 'Hardness:',
+  'label.tolerance': 'Tolerance:',
+  'label.rectInside': 'Inside',
+  'label.rectOutside': 'Outside',
+  'label.threshold': '≤',
+  'label.thresholdSuffix': 'px²',
+
+  // Tooltips
+  'tip.open': 'Open image (Cmd+O)',
+  'tip.aiBg': 'In-browser AI background removal (no API, no upload)\nWebGPU browsers recommended (Chrome / Edge / Firefox)\nFirst run downloads ~470MB; cached on your device thereafter',
+  'tip.aiInput': 'Import an externally-processed transparent image\nOriginal stays in memory so the restore brush / restore wand can recover lost pixels',
+  'tip.save': 'Save in current format (Cmd+S)',
+  'tip.saveFormat': 'Output format\nPNG: lossless, transparent\nWebP: smaller, transparent\nJPEG: smallest, no transparency',
+  'tip.separate': 'Pick connected components and save each as its own PNG',
+  'tip.cleanup': 'Show connected components; keep only the ones you select, erase the rest',
+  'tip.autoCleanup': 'One-tap: erase every component smaller than the threshold on the right\nUndoable',
+  'tip.autoCleanupThreshold': 'Minimum component size to keep (px²)',
+  'tip.preserve': 'ON: keep original canvas size and pixel positions / OFF: crop to opaque area',
+  'tip.autosave': 'Persists edits in your browser (IndexedDB). Restored on reload.\nTurning OFF also deletes any saved data',
+  'tip.showOrig': 'Overlay the original image at low opacity (compare what was removed)',
+  'tip.origOpacity': 'Original-overlay opacity (0–100%)',
+  'tip.feather': 'Soften jagged hair-tip edges at save time\nApplies to Save / Separate output\n(does not affect the working preview)',
+  'tip.featherStrength': 'Feather strength (1–3 px)',
+  'tip.toolErase': 'Eraser (E)',
+  'tip.toolRestore': 'Restore (R)',
+  'tip.toolWand': 'Magic wand (W)',
+  'tip.toolRestoreWand': 'Restore wand (Shift+W) — flood-fill restore from the original image',
+  'tip.toolRect': 'Rect-select to constrain the wand',
+  'tip.rectControls': 'Wand-scope rectangle. Switch between "inside only" and "outside only"',
+  'tip.undo': 'Undo (Cmd+Z)',
+  'tip.redo': 'Redo (Cmd+Shift+Z)',
+  'tip.fit': 'Fit to screen (Cmd+0)',
+  'tip.actual': 'Actual size (Cmd+1)',
+  'tip.themeSystem': 'Theme: System (click to switch to Light)',
+  'tip.themeLight': 'Theme: Light (click to switch to Dark)',
+  'tip.themeDark': 'Theme: Dark (click to switch to System)',
+  'tip.help': 'Keyboard shortcuts (?)',
+  'tip.lang': 'Switch language',
+
+  // Theme labels
+  'theme.system': 'System',
+  'theme.light': 'Light',
+  'theme.dark': 'Dark',
+
+  // Empty hint
+  'empty.title': 'Drop a PNG to start',
+  'empty.subtitle': 'or use <code>Open</code> / paste with <code>⌘V</code>',
+  'empty.shortcuts': 'Shortcuts: <code>E</code> Eraser / <code>R</code> Restore / <code>W</code> Wand / <code>⇧W</code> Restore wand / <code>[ ]</code> Size / <code>Space+drag</code> Pan / <code>Wheel</code> Zoom',
+
+  // Status / hints
+  'status.empty': 'No image',
+  'status.toolErase': 'Eraser',
+  'status.toolRestore': 'Restore',
+  'status.toolWand': 'Wand',
+  'status.toolRestoreWand': 'Restore wand',
+  'status.toolRect': 'Rect-select',
+  'status.history': 'History',
+  'hint.erase': 'Drag to erase / [ ] for size / Space+drag to pan',
+  'hint.restore': 'Drag to restore / [ ] for size',
+  'hint.wand': 'Click to flood-fill by color / use Tolerance to widen',
+  'hint.restoreWand': 'Click to flood-fill restore from the original image',
+  'hint.rect': 'Drag to draw rect / ESC to clear',
+
+  // Drop overlay
+  'drop.overlay': 'Drop image here',
+
+  // Progress
+  'progress.wand': 'Running magic wand…',
+  'progress.restoreWand': 'Running restore wand…',
+  'progress.detect': 'Detecting components…',
+  'progress.zip': 'Generating ZIP…',
+  'progress.aiInit': 'Preparing AI model… (first run downloads ~100MB)',
+  'progress.aiFetch': 'Downloading AI model…',
+  'progress.aiPrep': 'Preparing AI…',
+  'progress.aiInfer': 'Running AI background removal…',
+  'progress.aiFinalize': 'Applying result…',
+  'progress.escHint': 'Press ESC to cancel (changes will be discarded)',
+  'progress.png': 'Generating PNG…',
+
+  // Toasts
+  'toast.saved': 'Saved',
+  'toast.cropSaved': 'Crop saved',
+  'toast.multiDrop': 'image(s) dropped — loading the first one',
+  'toast.autosaveOff': 'Auto-save OFF (saved data cleared)',
+  'toast.autosaveOn': 'Auto-save ON',
+  'toast.restored': 'Restored your previous session',
+
+  // Errors
+  'error.title': 'Error',
+  'error.imageType': 'Please choose a PNG or JPEG',
+  'error.loadFailed': 'Failed to load image',
+  'error.saveFailed': 'Failed to save',
+  'error.aiFailed': 'AI background removal failed',
+  'error.processFailed': 'Operation failed',
+  'error.notLoaded': 'Please load an original image first',
+  'error.noOpaque': 'Nothing to save',
+  'error.noSmallElements': 'No small elements to remove',
+  'error.zipFailed': 'Failed to generate ZIP. Check your connection',
+  'error.notTransparent': 'No transparency information\nThis image has not been processed for transparency.\nPlease choose a PNG that contains transparent pixels.',
+  'error.empty': 'Nothing visible\nThis image is fully transparent and cannot be loaded.',
+  'error.unrelated': 'This image does not appear related to the current source\nOnly transparency-processed versions of the loaded source can be imported.',
+  'error.noCleanupTarget': 'No components match the cleanup criteria',
+
+  // Modal: large image warning
+  'modal.bigImage.title': 'Large image',
+  'modal.bigImage.body': 'Loading at full size may slow things down.',
+  'modal.bigImage.shrink': 'Shrink to',
+  'modal.bigImage.asis': 'Load as-is',
+  'modal.bigImage.cancel': 'Cancel',
+
+  // Modal: restore session
+  'modal.restore.title': 'Restore previous session?',
+  'modal.restore.file': 'File',
+  'modal.restore.size': 'Size',
+  'modal.restore.savedAt': 'Saved',
+  'modal.restore.minutesAgo': 'min ago',
+  'modal.restore.yes': 'Restore',
+  'modal.restore.no': 'Discard',
+
+  // Sizing
+  'modal.sizeMismatch': 'Size does not match the source image\nOnly transparency-processed versions of the loaded source can be imported.',
+
+  // Help modal
+  'help.title': 'Help',
+  'help.tab.file': 'File',
+  'help.tab.features': 'Features',
+  'help.tab.tool': 'Tool',
+  'help.tab.brush': 'Brush',
+  'help.tab.history': 'History',
+  'help.tab.view': 'View',
+  'help.tab.credits': 'Credits',
+  'help.support.note': 'Cleavry is free, ad-free, and self-funded. If it helped you,',
+  'help.support.cta': '☕ Buy Me a Coffee',
+  'help.support.suffix': 'is much appreciated.',
+  'help.legal.privacy': 'Privacy',
+  'help.legal.terms': 'Terms',
+  'help.legal.contact': 'Contact',
+  'help.legal.langSwitch': '日本語',
+};

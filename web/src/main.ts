@@ -23,6 +23,7 @@ import { magicWandAt as runMagicWand, cancelWand, isWandRunning } from './tools/
 import { detectComponents, SEPARATE_MIN_AREA } from './components/connected';
 import { showProgress, updateProgress, hideProgress, setProgressTitle } from './ui/progress';
 import { showError } from './ui/error';
+import { t, applyI18n, getLang, setLang } from './i18n';
 import { initHistory, pushUndo, undo, redoFn } from './persist/history';
 import {
   canvas, ctx, canvasWrap, workspace, cursor, rectOverlay,
@@ -60,11 +61,14 @@ function updateStatus() {
     ? `${Math.round(state.zoom * 100)}%`
     : '';
   $('tool-status').textContent = ({
-    erase: '消しゴム', restore: '復元', wand: 'ワンド',
-    restoreWand: '復元ワンド', rectSelect: '範囲選択',
+    erase:       t('status.toolErase'),
+    restore:     t('status.toolRestore'),
+    wand:        t('status.toolWand'),
+    restoreWand: t('status.toolRestoreWand'),
+    rectSelect:  t('status.toolRect'),
   })[state.tool] || state.tool;
   $('undo-status').textContent = state.imgW
-    ? `履歴: ${state.undo.length} / ${state.maxUndo}`
+    ? `${t('status.history')}: ${state.undo.length} / ${state.maxUndo}`
     : '';
   $('save-btn').disabled = !state.workData;
   $('save-format').disabled = !state.workData;
@@ -86,7 +90,7 @@ function updateStatus() {
 // ============================================================================
 function loadImageFromFile(file) {
   if (!file || !file.type.startsWith('image/')) {
-    showError('PNG または JPEG を選択してください');
+    showError(t('error.imageType'));
     return;
   }
   state.filename = file.name;
@@ -102,15 +106,12 @@ function loadImageFromFile(file) {
       const sw = Math.floor(img.width * ratio);
       const sh = Math.floor(img.height * ratio);
       const choice = await showModal({
-        title: '大きな画像です',
-        message:
-          `画像サイズ: ${img.width} × ${img.height}\n\n` +
-          `そのまま読み込むと処理が重くなる可能性があります。\n` +
-          `推奨は ${sw} × ${sh} への縮小です。`,
+        title: t('modal.bigImage.title'),
+        message: `${img.width} × ${img.height}\n\n${t('modal.bigImage.body')}\n→ ${sw} × ${sh}`,
         buttons: [
-          { label: `${sw}×${sh} に縮小`, value: 'shrink', primary: true },
-          { label: 'そのまま読込', value: 'asis' },
-          { label: 'キャンセル', value: 'cancel' },
+          { label: `${t('modal.bigImage.shrink')} ${sw}×${sh}`, value: 'shrink', primary: true },
+          { label: t('modal.bigImage.asis'), value: 'asis' },
+          { label: t('modal.bigImage.cancel'), value: 'cancel' },
         ],
       });
       if (choice === 'cancel') { URL.revokeObjectURL(img.src); return; }
@@ -148,7 +149,7 @@ function loadImageFromFile(file) {
     // even before the user has touched it.
     scheduleAutosave();
   };
-  img.onerror = () => showError('画像の読み込みに失敗しました');
+  img.onerror = () => showError(t('error.loadFailed'));
   img.src = URL.createObjectURL(file);
 }
 
@@ -159,19 +160,19 @@ function loadImageFromFile(file) {
 // from the genuine source.
 function loadAIOutputFile(file) {
   if (!state.origData) {
-    showError('先に元画像を読み込んでください');
+    showError(t('error.notLoaded'));
     return;
   }
   if (!file || !file.type.startsWith('image/')) {
-    showError('PNG または JPEG を選択してください');
+    showError(t('error.imageType'));
     return;
   }
   const img = new Image();
   img.onload = () => {
     if (img.width !== state.imgW || img.height !== state.imgH) {
       showError(
-        `サイズが元画像と一致しません\n元: ${state.imgW}×${state.imgH}\n選択: ${img.width}×${img.height}\n` +
-        '読み込んだ元画像を透過処理した画像のみ取り込めます。'
+        `${state.imgW}×${state.imgH} / ${img.width}×${img.height}\n` +
+        t('modal.sizeMismatch')
       );
       URL.revokeObjectURL(img.src);
       return;
@@ -217,18 +218,12 @@ function loadAIOutputFile(file) {
     }
 
     if (transparentCount === 0) {
-      showError(
-        '透過情報がありません\n' +
-        'この画像は透過処理されていません。\n' +
-        '透明ピクセルを含む PNG を選択してください。'
-      );
+      showError(t('error.notTransparent'));
       URL.revokeObjectURL(img.src);
       return;
     }
     if (opaqueCount === 0) {
-      showError(
-        '中身がありません\n完全に透明な画像のため取り込めません。'
-      );
+      showError(t('error.empty'));
       URL.revokeObjectURL(img.src);
       return;
     }
@@ -236,10 +231,7 @@ function loadAIOutputFile(file) {
     const SIMILARITY_THRESHOLD = 50;  // 0..441 (RGB distance)
     const avgDiff = totalDiff / opaqueCount;
     if (avgDiff > SIMILARITY_THRESHOLD) {
-      showError(
-        '元画像と関連性が低いようです\n' +
-        '読み込んだ元画像を透過処理した画像のみ取り込めます。'
-      );
+      showError(t('error.unrelated'));
       URL.revokeObjectURL(img.src);
       return;
     }
@@ -252,7 +244,7 @@ function loadAIOutputFile(file) {
     updateStatus();
     URL.revokeObjectURL(img.src);
   };
-  img.onerror = () => showError('画像の読み込みに失敗しました');
+  img.onerror = () => showError(t('error.loadFailed'));
   img.src = URL.createObjectURL(file);
 }
 
@@ -600,7 +592,7 @@ async function startSeparateMode() {
   if (state.separateMode || state.cleanupMode) return;
   if (isWandRunning()) return;
 
-  showProgress('要素を検出中…');
+  showProgress(t('progress.detect'));
   // Yield once so the overlay renders before the synchronous BFS.
   await new Promise(r => setTimeout(r, 30));
 
@@ -609,13 +601,13 @@ async function startSeparateMode() {
     result = detectComponents(state.workData, state.imgW, state.imgH);
   } catch (err) {
     hideProgress();
-    showError('処理に失敗しました');
+    showError(t('error.processFailed'));
     return;
   }
   hideProgress();
 
   if (result.components.length === 0) {
-    showError('保存できる内容がありません');
+    showError(t('error.noOpaque'));
     return;
   }
 
@@ -704,11 +696,11 @@ async function saveSelectedComponents() {
   const selected = state.components.filter(c => c.selected);
   if (selected.length === 0) return;
   if (typeof JSZip === 'undefined') {
-    showError('ZIP の生成に失敗しました。接続を確認してください');
+    showError(t('error.zipFailed'));
     return;
   }
 
-  showProgress('PNG を生成中…');
+  showProgress(t('progress.png'));
   await new Promise(r => setTimeout(r, 30));
 
   const zip = new JSZip();
@@ -728,7 +720,7 @@ async function saveSelectedComponents() {
     updateProgress(((i + 1) / selected.length) * 95);
   }
 
-  setProgressTitle('ZIP を生成中…');
+  setProgressTitle(t('progress.zip'));
   const zipBlob = await zip.generateAsync(
     { type: 'blob' },
     meta => updateProgress(95 + meta.percent * 0.05)
@@ -759,7 +751,7 @@ async function startCleanupMode() {
   if (state.separateMode || state.cleanupMode) return;
   if (isWandRunning()) return;
 
-  showProgress('要素を検出中…');
+  showProgress(t('progress.detect'));
   await new Promise(r => setTimeout(r, 30));
 
   let result;
@@ -767,13 +759,13 @@ async function startCleanupMode() {
     result = detectComponents(state.workData, state.imgW, state.imgH);
   } catch (err) {
     hideProgress();
-    showError('処理に失敗しました');
+    showError(t('error.processFailed'));
     return;
   }
   hideProgress();
 
   if (result.components.length === 0) {
-    showError('削除対象の要素が見つかりません');
+    showError(t('error.noCleanupTarget'));
     return;
   }
 
@@ -860,7 +852,7 @@ async function runAutoCleanup() {
   if (state.separateMode || state.cleanupMode) return;
   if (isWandRunning()) return;
 
-  showProgress('ノイズ成分を検出中…');
+  showProgress(t('progress.detect'));
   await new Promise(r => setTimeout(r, 30));
 
   let result;
@@ -868,7 +860,7 @@ async function runAutoCleanup() {
     result = detectComponents(state.workData, state.imgW, state.imgH);
   } catch (err) {
     hideProgress();
-    showError('処理に失敗しました');
+    showError(t('error.processFailed'));
     return;
   }
   hideProgress();
@@ -884,7 +876,7 @@ async function runAutoCleanup() {
   const removedCount = result.components.length - keep.size;
 
   if (removedCount === 0) {
-    showError('削除できる小さな要素が見つかりませんでした');
+    showError(t('error.noSmallElements'));
     return;
   }
 
@@ -917,7 +909,7 @@ async function runAIBackgroundRemoval() {
 
   bgRemovalRunning = true;
   updateStatus();
-  showProgress('AI モデルを準備中…（初回は ~100MB のダウンロード）', { cancellable: false });
+  showProgress(t('progress.aiInit'), { cancellable: false });
 
   try {
     // workData → data-URL so transformers.js can decode it via fetch.
@@ -931,10 +923,10 @@ async function runAIBackgroundRemoval() {
 
     const alphaMask = await segmentBackground(dataURL, state.imgW, state.imgH, e => {
       const titles = {
-        'model-fetch': 'AI モデルを取得中…',
-        'preparing':   'AI を準備中…',
-        'inferring':   'AI で背景除去中…',
-        'finalizing':  '結果を反映中…',
+        'model-fetch': t('progress.aiFetch'),
+        'preparing':   t('progress.aiPrep'),
+        'inferring':   t('progress.aiInfer'),
+        'finalizing':  t('progress.aiFinalize'),
       };
       setProgressTitle(titles[e.phase]);
       updateProgress(Math.min(99, e.progress));
@@ -951,7 +943,7 @@ async function runAIBackgroundRemoval() {
     hideProgress();
   } catch (err) {
     hideProgress();
-    showError('AI 背景除去に失敗しました');
+    showError(t('error.aiFailed'));
   } finally {
     bgRemovalRunning = false;
     updateStatus();
@@ -974,21 +966,23 @@ async function saveAsPNG() {
       featherActive: state.featherActive,
       featherStrength: state.featherStrength,
     });
-    showToast(`保存しました（${outW}×${outH}）`);
+    showToast(`${t('toast.saved')}（${outW}×${outH}）`);
   } catch (err) {
-    showError(err.message || '保存に失敗しました');
+    showError(err.message || t('error.saveFailed'));
   }
 }
 
 // ============================================================================
 // Tool selection
 // ============================================================================
-const TOOL_HINTS = {
-  erase:       'ドラッグで透明化 / [ ] でサイズ / Space+ドラッグでパン',
-  restore:     'ドラッグで元に戻す / [ ] でサイズ',
-  wand:        'クリックで連続同色を一括透明化 / 色許容度で範囲調整',
-  restoreWand: 'クリックで元画像から連続同色を復元',
-  rectSelect:  'ドラッグで矩形範囲を作成 / ESC でクリア',
+// Tool-hint keys; the actual translated string is fetched at render
+// time via t() so language switches reflect immediately.
+const TOOL_HINT_KEY = {
+  erase:       'hint.erase',
+  restore:     'hint.restore',
+  wand:        'hint.wand',
+  restoreWand: 'hint.restoreWand',
+  rectSelect:  'hint.rect',
 };
 
 function setTool(name) {
@@ -1026,7 +1020,7 @@ function setTool(name) {
   refreshToolButtonsActive();
   // Tool-specific hint in the status bar.
   const hint = $('tool-hint');
-  if (hint) hint.textContent = TOOL_HINTS[name] || '';
+  if (hint) hint.textContent = TOOL_HINT_KEY[name] ? t(TOOL_HINT_KEY[name]) : '';
   updateStatus();
 }
 
@@ -1096,7 +1090,7 @@ function setupDragDrop() {
     const files = Array.from(e.dataTransfer?.files || []);
     if (files.length === 0) return;
     if (files.length > 1) {
-      showToast(`${files.length} 枚のうち最初の 1 枚を読み込みます`);
+      showToast(`${files.length} ${t('toast.multiDrop')}`);
     }
     loadImageFromFile(files[0]);
   });
@@ -1135,6 +1129,16 @@ function bindUI() {
     };
   });
   $('theme-btn').onclick = cycleTheme;
+  // Language toggle. Button label always shows the *other* language.
+  const langBtn = $('lang-btn');
+  if (langBtn) {
+    const paintLangBtn = () => {
+      langBtn.textContent = getLang() === 'ja' ? 'EN' : 'JA';
+    };
+    paintLangBtn();
+    window.addEventListener('langchange', paintLangBtn);
+    langBtn.onclick = () => setLang(getLang() === 'ja' ? 'en' : 'ja');
+  }
   $('help-overlay').onclick = e => {
     // Click outside the box closes
     if (e.target.id === 'help-overlay') e.target.classList.remove('show');
@@ -1266,10 +1270,10 @@ function bindUI() {
       // the toggle flip would still fire ~1.5s later.
       clearTimeout(autosaveTimer);
       clearAutosave();
-      showToast('自動保存 OFF（保存済みデータをクリア）');
+      showToast(t('toast.autosaveOff'));
     } else {
       autosaveNow();
-      showToast('自動保存 ON');
+      showToast(t('toast.autosaveOn'));
     }
     e.target.blur();
   };
@@ -1306,14 +1310,14 @@ async function tryRestoreAutosave() {
   if (!session || !session.imgW) return;
   const ageMin = Math.round((Date.now() - session.savedAt) / 60000);
   const ok = await showModal({
-    title: '前回のセッションを復元しますか？',
+    title: t('modal.restore.title'),
     message:
-      `ファイル: ${session.filename}\n` +
-      `サイズ: ${session.imgW} × ${session.imgH}\n` +
-      `保存時刻: ${ageMin} 分前`,
+      `${t('modal.restore.file')}: ${session.filename}\n` +
+      `${t('modal.restore.size')}: ${session.imgW} × ${session.imgH}\n` +
+      `${t('modal.restore.savedAt')}: ${ageMin} ${t('modal.restore.minutesAgo')}`,
     buttons: [
-      { label: '復元する', value: true, primary: true },
-      { label: '破棄する', value: false },
+      { label: t('modal.restore.yes'), value: true, primary: true },
+      { label: t('modal.restore.no'), value: false },
     ],
   });
   if (!ok) { clearAutosave(); return; }
@@ -1332,7 +1336,7 @@ async function tryRestoreAutosave() {
   fitToScreen();
   redraw();
   updateStatus();
-  showToast('前回のセッションを復元しました');
+  showToast(t('toast.restored'));
 }
 
 async function clearAutosave() {
@@ -1596,6 +1600,10 @@ setRenderHooks({
 });
 initHistory({ redraw, updateStatus, scheduleAutosave, exitSeparateMode, exitCleanupMode });
 
+// Replace static Japanese markup with the chosen language *before*
+// any code reads textContent / data-tip / aria-label off the DOM.
+applyI18n();
+
 bindUI();
 bindCanvas();
 bindKeys();
@@ -1605,6 +1613,15 @@ initTheme();
 // a wand is picked, sets the active highlight, etc).
 setTool(state.tool);
 updateStatus();
+
+// React to manual language switches: re-fill DOM, re-render dynamic
+// labels (tool-status, tool-hint), re-render the theme button.
+window.addEventListener('langchange', () => {
+  applyI18n();
+  // Re-apply tool-dependent text that lives on state, not on DOM.
+  setTool(state.tool);
+  updateStatus();
+});
 // Hide the splash now that the toolbar is wired up and the canvas is
 // ready to receive input. requestAnimationFrame defers until paint to
 // avoid yanking the splash off before the new UI renders.

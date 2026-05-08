@@ -1,0 +1,167 @@
+// 日本語辞書。`en.ts` のキーと完全に一致させること。
+export default {
+  // Toolbar buttons
+  'btn.open': '開く',
+  'btn.aiBg': 'AI 背景除去',
+  'btn.aiInput': 'AI出力読込',
+  'btn.save': '保存',
+  'btn.separate': '分離保存',
+  'btn.cleanup': 'ノイズ削除',
+  'btn.autoCleanup': '自動ノイズ除去',
+  'btn.showOrig': '元画像比較',
+  'btn.feather': '縁ぼかし',
+  'btn.fit': 'ぴったり',
+  'btn.actual': '100%',
+  'btn.help': 'ヘルプ',
+
+  // Tool buttons
+  'tool.erase': '消しゴム',
+  'tool.restore': '復元',
+  'tool.wand': 'ワンド',
+  'tool.restoreWand': '復元ワンド',
+  'tool.rect': '範囲',
+
+  // Toggles & labels
+  'label.preserve': '元キャンバス保持',
+  'label.autosave': '自動保存',
+  'label.tool': 'ツール:',
+  'label.size': 'サイズ:',
+  'label.hardness': '硬度:',
+  'label.tolerance': '色許容度:',
+  'label.rectInside': '内側',
+  'label.rectOutside': '外側',
+  'label.threshold': '≤',
+  'label.thresholdSuffix': 'px²',
+
+  // Tooltips (data-tip)
+  'tip.open': '画像を開く (Cmd+O)',
+  'tip.aiBg': 'ブラウザ内 AI で自動背景除去（API 不要・画像は外部送信なし）\n対応ブラウザ推奨（Chrome / Edge / Firefox）\n初回のみ ~470MB のダウンロード、以降は端末に保存',
+  'tip.aiInput': '読み込んだ元画像を透過処理した画像を取り込み\n元画像は保持され、復元ブラシ／復元ワンドで消えた部分を取り戻せます',
+  'tip.save': '現在のフォーマットで保存 (Cmd+S)',
+  'tip.saveFormat': '出力フォーマット\nPNG: 可逆・透過対応\nWebP: 圧縮率良・透過対応\nJPEG: 透過なし・最小サイズ',
+  'tip.separate': 'つながった要素を選んで個別 PNG として保存',
+  'tip.cleanup': 'つながった要素を表示し、選んだもの以外を一括削除（消し残し・ノイズ除去）',
+  'tip.autoCleanup': 'ワンタップ実行：右の設定サイズ以下の小さな要素を確認なしで一括削除\nUndo で取り消し可能',
+  'tip.autoCleanupThreshold': '自動ノイズ除去で削除する最小サイズ（px²）',
+  'tip.preserve': 'ON: 元画像と同じサイズ・位置で保存（重ねると元の絵に戻る） / OFF: 中身のある部分だけ切り抜き',
+  'tip.autosave': '編集をブラウザ内に自動保存。再読み込み時に復元できます。\nOFF にすると保存済みデータも削除されます',
+  'tip.showOrig': '元画像を半透明で重ねて表示（削られた領域の確認用）',
+  'tip.origOpacity': '元画像オーバーレイの透明度（0〜100%）',
+  'tip.feather': '保存時に縁をぼかして毛先のジャギーを軽減\nON にしておくと「保存」「分離保存」の出力に自動適用\n（プレビュー画面には反映されません）',
+  'tip.featherStrength': '縁ぼかしの強度（1〜3px）',
+  'tip.toolErase': '消しゴム (E)',
+  'tip.toolRestore': '復元 (R)',
+  'tip.toolWand': 'マジックワンド (W)',
+  'tip.toolRestoreWand': '復元ワンド (Shift+W) — 元画像の連続同色を一括復元',
+  'tip.toolRect': '矩形範囲を指定してワンドの対象を制限',
+  'tip.rectControls': 'ワンドの適用範囲。矩形を引いた状態で「内側のみ」「外側のみ」を切替',
+  'tip.undo': 'Undo (Cmd+Z)',
+  'tip.redo': 'Redo (Cmd+Shift+Z)',
+  'tip.fit': '画面に合わせる (Cmd+0)',
+  'tip.actual': '100% 表示 (Cmd+1)',
+  'tip.themeSystem': 'テーマ：システム（クリックでライトに切替）',
+  'tip.themeLight': 'テーマ：ライト（クリックでダークに切替）',
+  'tip.themeDark': 'テーマ：ダーク（クリックでシステムに切替）',
+  'tip.help': 'ショートカット一覧 (?)',
+  'tip.lang': '言語切替',
+
+  // Theme labels
+  'theme.system': 'システム',
+  'theme.light': 'ライト',
+  'theme.dark': 'ダーク',
+
+  // Empty hint
+  'empty.title': 'PNG をドラッグ＆ドロップ',
+  'empty.subtitle': 'または <code>開く</code> / <code>⌘V</code> でペースト',
+  'empty.shortcuts': 'ショートカット: <code>E</code>消しゴム / <code>R</code>復元 / <code>W</code>ワンド / <code>⇧W</code>復元ワンド / <code>[ ]</code>サイズ / <code>Space+ドラッグ</code>パン / <code>ホイール</code>ズーム',
+
+  // Status / hints
+  'status.empty': '画像未読込',
+  'status.toolErase': '消しゴム',
+  'status.toolRestore': '復元',
+  'status.toolWand': 'ワンド',
+  'status.toolRestoreWand': '復元ワンド',
+  'status.toolRect': '範囲選択',
+  'status.history': '履歴',
+  'hint.erase': 'ドラッグで透明化 / [ ] でサイズ / Space+ドラッグでパン',
+  'hint.restore': 'ドラッグで元に戻す / [ ] でサイズ',
+  'hint.wand': 'クリックで連続同色を一括透明化 / 色許容度で範囲調整',
+  'hint.restoreWand': 'クリックで元画像から連続同色を復元',
+  'hint.rect': 'ドラッグで矩形範囲を作成 / ESC でクリア',
+
+  // Drop overlay
+  'drop.overlay': 'ここに画像をドロップ',
+
+  // Progress
+  'progress.wand': 'マジックワンド処理中…',
+  'progress.restoreWand': '復元ワンド処理中…',
+  'progress.detect': '要素を検出中…',
+  'progress.zip': 'ZIP を生成中…',
+  'progress.aiInit': 'AI モデルを準備中…（初回は ~100MB のダウンロード）',
+  'progress.aiFetch': 'AI モデルを取得中…',
+  'progress.aiPrep': 'AI を準備中…',
+  'progress.aiInfer': 'AI で背景除去中…',
+  'progress.aiFinalize': '結果を反映中…',
+  'progress.escHint': 'ESC キーで中断（変更は破棄されます）',
+  'progress.png': 'PNG を生成中…',
+
+  // Toasts
+  'toast.saved': '保存しました',
+  'toast.cropSaved': '矩形を保存しました',
+  'toast.multiDrop': '枚のうち最初の 1 枚を読み込みます',
+  'toast.autosaveOff': '自動保存 OFF（保存済みデータをクリア）',
+  'toast.autosaveOn': '自動保存 ON',
+  'toast.restored': '前回のセッションを復元しました',
+
+  // Errors
+  'error.title': 'エラー',
+  'error.imageType': 'PNG または JPEG を選択してください',
+  'error.loadFailed': '画像の読み込みに失敗しました',
+  'error.saveFailed': '保存に失敗しました',
+  'error.aiFailed': 'AI 背景除去に失敗しました',
+  'error.processFailed': '処理に失敗しました',
+  'error.notLoaded': '先に元画像を読み込んでください',
+  'error.noOpaque': '保存できる内容がありません',
+  'error.noSmallElements': '削除できる小さな要素が見つかりませんでした',
+  'error.zipFailed': 'ZIP の生成に失敗しました。接続を確認してください',
+  'error.notTransparent': '透過情報がありません\nこの画像は透過処理されていません。\n透明ピクセルを含む PNG を選択してください。',
+  'error.empty': '中身がありません\n完全に透明な画像のため取り込めません。',
+  'error.unrelated': '元画像と関連性が低いようです\n読み込んだ元画像を透過処理した画像のみ取り込めます。',
+  'error.noCleanupTarget': '削除対象の要素が見つかりません',
+
+  // Modal: large image warning
+  'modal.bigImage.title': '大きな画像です',
+  'modal.bigImage.body': 'そのまま読み込むと処理が重くなる可能性があります。',
+  'modal.bigImage.shrink': 'に縮小',
+  'modal.bigImage.asis': 'そのまま読込',
+  'modal.bigImage.cancel': 'キャンセル',
+
+  // Modal: restore session
+  'modal.restore.title': '前回のセッションを復元しますか？',
+  'modal.restore.file': 'ファイル',
+  'modal.restore.size': 'サイズ',
+  'modal.restore.savedAt': '保存時刻',
+  'modal.restore.minutesAgo': '分前',
+  'modal.restore.yes': '復元する',
+  'modal.restore.no': '破棄する',
+
+  // Sizing
+  'modal.sizeMismatch': 'サイズが元画像と一致しません\n読み込んだ元画像を透過処理した画像のみ取り込めます。',
+
+  // Help modal
+  'help.title': 'ヘルプ',
+  'help.tab.file': 'ファイル',
+  'help.tab.features': '編集機能',
+  'help.tab.tool': 'ツール',
+  'help.tab.brush': 'ブラシ',
+  'help.tab.history': '履歴',
+  'help.tab.view': '表示',
+  'help.tab.credits': 'クレジット',
+  'help.support.note': 'Cleavry は完全無料・広告なしで運営しています。気に入ったら',
+  'help.support.cta': '☕ Buy Me a Coffee',
+  'help.support.suffix': 'で開発をサポートできます。',
+  'help.legal.privacy': 'プライバシーポリシー',
+  'help.legal.terms': '利用規約',
+  'help.legal.contact': 'お問い合わせ',
+  'help.legal.langSwitch': 'English',
+};
