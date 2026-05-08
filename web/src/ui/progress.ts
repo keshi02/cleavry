@@ -2,20 +2,39 @@
 // (magic wand BFS, AI background removal, connected-component detect).
 // Single instance — only one operation can be running at a time.
 import { $ } from '../utils/dom';
+import { t } from '../i18n';
 
 const overlay = $('progress-overlay');
 const fill    = $('progress-fill');
 const title   = $('progress-title');
 const hint    = overlay.querySelector('.hint') as HTMLElement | null;
 
-export function showProgress(label: string, options: { cancellable?: boolean } = {}): void {
+export type CancelMode = 'cancel' | 'reload' | 'none';
+
+export function showProgress(
+  label: string,
+  options: { cancel?: CancelMode } = {},
+): void {
   title.textContent = label || '処理中…';
   fill.style.width = '0%';
-  // Hide the "ESC to cancel" hint when the caller can't honour cancel
-  // (e.g. transformers.js inference is uncancellable). Defaults to
-  // cancellable so existing wand calls keep their hint.
-  if (hint) hint.style.display = options.cancellable === false ? 'none' : '';
+  setProgressCancelMode(options.cancel ?? 'cancel');
   overlay.classList.add('show');
+}
+
+// Switch the cancel-hint label without re-showing the overlay or
+// resetting the bar. Used to flip from "Press ESC to cancel the
+// download" to "" when the AI flow transitions from the abortable
+// model-fetch phase into uncancellable inference.
+export function setProgressCancelMode(mode: CancelMode): void {
+  if (!hint) return;
+  if (mode === 'none') {
+    hint.style.display = 'none';
+    return;
+  }
+  hint.style.display = '';
+  hint.textContent = mode === 'reload'
+    ? t('progress.escHintReload')
+    : t('progress.escHint');
 }
 
 export function updateProgress(percent: number): void {

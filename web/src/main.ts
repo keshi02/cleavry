@@ -21,7 +21,7 @@ import { state } from './state';
 import { applyBrushDab, applyStroke } from './tools/brush';
 import { magicWandAt as runMagicWand, cancelWand, isWandRunning } from './tools/wand';
 import { detectComponents, SEPARATE_MIN_AREA } from './components/connected';
-import { showProgress, updateProgress, hideProgress, setProgressTitle } from './ui/progress';
+import { showProgress, updateProgress, hideProgress, setProgressTitle, setProgressCancelMode } from './ui/progress';
 import { showError } from './ui/error';
 import { t, applyI18n, setLang } from './i18n';
 
@@ -272,6 +272,10 @@ function clearFeatherToggle() {
 // True while AI background removal is in flight. Used by updateStatus()
 // to disable the AI button so the user can't double-fire it.
 let bgRemovalRunning = false;
+// Tracks where the AI flow currently is so ESC only honours the
+// abortable model-fetch phase. Once we transition into preparing /
+// inferring / finalizing, transformers.js can't be cancelled.
+let bgPhase: 'idle' | 'model-fetch' | 'inferring' = 'idle';
 
 // Cmd+Z / Cmd+Shift+Z auto-repeat governor (~12 ops/sec).
 let lastUndoKeyTime = 0;
@@ -925,8 +929,12 @@ async function runAIBackgroundRemoval() {
   if (state.separateMode || state.cleanupMode) return;
 
   bgRemovalRunning = true;
+  bgPhase = 'model-fetch';
   updateStatus();
-  showProgress(t('progress.aiInit'), { cancellable: false });
+  // The AI flow starts in the abortable "downloading model" phase
+  // (the user can hit ESC to discard the page and try again later)
+  // and switches to non-cancellable once inference begins.
+  showProgress(t('progress.aiInit'), { cancel: 'reload' });
 
   try {
     // workData → data-URL so transformers.js can decode it via fetch.
@@ -947,6 +955,13 @@ async function runAIBackgroundRemoval() {
       };
       setProgressTitle(titles[e.phase]);
       updateProgress(Math.min(99, e.progress));
+      // Transition out of the cancellable model-fetch phase as soon as
+      // the model is in memory. Hide the ESC-cancel hint once we can no
+      // longer honour the cancel.
+      if (e.phase !== 'model-fetch' && bgPhase === 'model-fetch') {
+        bgPhase = 'inferring';
+        setProgressCancelMode('none');
+      }
     });
 
     if (state.separateMode) exitSeparateMode();
@@ -963,8 +978,25 @@ async function runAIBackgroundRemoval() {
     showError(t('error.aiFailed'));
   } finally {
     bgRemovalRunning = false;
+    bgPhase = 'idle';
     updateStatus();
   }
+}
+
+// transformers.js exposes no AbortSignal we can rely on, so the only
+// reliable way to terminate a half-finished model download is to
+// reload the tab. Confirm with the user first since reload nukes any
+// in-progress edits (autosave restores them next time).
+async function confirmCancelDownload() {
+  const ok = await showModal({
+    title: t('modal.cancelDownload.title'),
+    message: t('modal.cancelDownload.body'),
+    buttons: [
+      { label: t('modal.cancelDownload.yes'), value: true, primary: true },
+      { label: t('modal.cancelDownload.no'), value: false },
+    ],
+  });
+  if (ok) location.reload();
 }
 
 // ============================================================================
@@ -1473,12 +1505,16 @@ function bindKeys() {
     // Ignore when focus is in an input
     if (e.target.tagName === 'INPUT' && e.target.type !== 'checkbox') return;
 
-    // ESC: cancel running wand → exit component-picking mode → clear
-    // rect selection → close help. AI background removal is *not*
-    // ESC-cancellable: transformers.js can't be aborted mid-flight, so
-    // pretending to cancel only confuses the user.
+    // ESC: cancel running wand → cancel AI download (only during the
+    // model-fetch phase; inference is uncancellable in transformers.js)
+    // → exit component-picking mode → clear rect selection → close help.
     if (e.key === 'Escape') {
       if (isWandRunning()) { e.preventDefault(); cancelWand(); return; }
+      if (bgRemovalRunning && bgPhase === 'model-fetch') {
+        e.preventDefault();
+        confirmCancelDownload();
+        return;
+      }
       if (state.separateMode) { e.preventDefault(); exitSeparateMode(); return; }
       if (state.cleanupMode) { e.preventDefault(); exitCleanupMode(); return; }
       if (state.rectSelection) { e.preventDefault(); clearRectSelection(); return; }

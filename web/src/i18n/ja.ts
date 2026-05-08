@@ -102,6 +102,7 @@ export default {
   'progress.aiInfer': 'AI で背景除去中…',
   'progress.aiFinalize': '結果を反映中…',
   'progress.escHint': 'ESC キーで中断（変更は破棄されます）',
+  'progress.escHintReload': 'ESC キーでダウンロードを中断',
   'progress.png': 'PNG を生成中…',
 
   // Toasts
@@ -146,6 +147,12 @@ export default {
 
   // Sizing
   'modal.sizeMismatch': 'サイズが元画像と一致しません\n読み込んだ元画像を透過処理した画像のみ取り込めます。',
+
+  // Modal: cancel download
+  'modal.cancelDownload.title': 'ダウンロードを中断しますか？',
+  'modal.cancelDownload.body': 'AI モデルのダウンロードを中断するにはページをリロードします。\n編集中の状態は失われます（自動保存は次回読込時に復元できます）。',
+  'modal.cancelDownload.yes': '中断する',
+  'modal.cancelDownload.no': '続行',
 
   // Help modal
   'help.title': 'ヘルプ',

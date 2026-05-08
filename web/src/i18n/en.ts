@@ -102,6 +102,7 @@ export default {
   'progress.aiInfer': 'Running AI background removal…',
   'progress.aiFinalize': 'Applying result…',
   'progress.escHint': 'Press ESC to cancel (changes will be discarded)',
+  'progress.escHintReload': 'Press ESC to cancel the download',
   'progress.png': 'Generating PNG…',
 
   // Toasts
@@ -146,6 +147,12 @@ export default {
 
   // Sizing
   'modal.sizeMismatch': 'Size does not match the source image\nOnly transparency-processed versions of the loaded source can be imported.',
+
+  // Modal: cancel download
+  'modal.cancelDownload.title': 'Cancel download?',
+  'modal.cancelDownload.body': 'Cancelling the AI model download will reload the page.\nUnsaved edits will be lost (auto-save can restore them on next load).',
+  'modal.cancelDownload.yes': 'Cancel download',
+  'modal.cancelDownload.no': 'Continue',
 
   // Help modal
   'help.title': 'Help',
