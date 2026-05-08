@@ -19,7 +19,7 @@
 | アカウント登録 | 必要 | **不要** |
 | 起動 | サインイン → 待機 | **URL を開いた瞬間に使える** |
 
-ブラウザの WebGPU と最新の ML モデル（BiRefNet）で、**サーバーなしで AI 背景除去** が動きます。AI が誤って削った部分は手動の復元ブラシで元に戻せます。
+ブラウザの WebGPU と高精度なセグメンテーションモデル（BiRefNet）で、**サーバーなしで AI 背景除去** が動きます。AI が誤って削った部分は手動の復元ブラシで元に戻せます。
 
 ## 主な機能
 
@@ -47,11 +47,10 @@
 
 | | |
 |---|---|
-| **フロントエンド** | Vite, TypeScript（一部 `@ts-nocheck` で段階移行中） |
-| **AI 推論** | [@huggingface/transformers](https://github.com/huggingface/transformers.js) v4 + [BiRefNet 512](https://huggingface.co/onnx-community/BiRefNet_512x512-ONNX) (fp16, WebGPU) |
+| **フロントエンド** | Vite, TypeScript |
+| **AI 推論** | [@huggingface/transformers](https://github.com/huggingface/transformers.js) + [BiRefNet 512](https://huggingface.co/onnx-community/BiRefNet_512x512-ONNX) (fp16, WebGPU) |
 | **ファイル処理** | Canvas API, IndexedDB, [JSZip](https://stuk.github.io/jszip/) |
 | **ホスティング** | Cloudflare Pages |
-| **ドメイン** | お名前.com / Cloudflare DNS |
 
 ## リポジトリ構成
 
@@ -122,8 +121,8 @@ fixed by hand with a restore brush.
 ### Built with
 
 Vite, TypeScript, [@huggingface/transformers](https://github.com/huggingface/transformers.js),
-[BiRefNet](https://huggingface.co/onnx-community/BiRefNet_512x512-ONNX).
-Hosted on Cloudflare Pages.
+and [BiRefNet](https://huggingface.co/onnx-community/BiRefNet_512x512-ONNX) for
+state-of-the-art segmentation. Hosted on Cloudflare Pages.
 
 ### Support
 
