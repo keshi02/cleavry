@@ -1,0 +1,5 @@
+# Cleavry — allow all crawlers, point them at the sitemap.
+User-agent: *
+Allow: /
+
+Sitemap: https://cleavry.com/sitemap.xml
