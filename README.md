@@ -92,7 +92,7 @@ Cleavry は完全無料で広告を載せていません。気に入ったら開
 
 ## ライセンス
 
-未定（リリース後に決定予定）。
+[MIT License](./LICENSE) — Copyright © 2026 Sui Yamamoto
 
 ## Credits
 
