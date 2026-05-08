@@ -22,11 +22,24 @@ export type Key = keyof typeof ja;
 const STORAGE_KEY = 'cleavry-lang';
 
 function detectLang(): Lang {
-  // Manual override takes precedence.
+  // Highest priority: explicit ?lang= override. Used by localized
+  // landing pages (`/ja` and `/en`) to carry the visitor's language
+  // choice into the editor on click. Persist it so they don't have
+  // to keep the query string on subsequent visits.
+  try {
+    const q = new URLSearchParams(window.location.search).get('lang');
+    if (q === 'ja' || q === 'en') {
+      try { localStorage.setItem(STORAGE_KEY, q); } catch (_) {}
+      return q;
+    }
+  } catch (_) { /* not a real URL context */ }
+
+  // Manual override (set via cleavry.setLang() in the console).
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === 'ja' || stored === 'en') return stored;
   } catch (_) { /* private mode */ }
+
   // Browser preference: anything starting with "ja" → Japanese, else English.
   const pref = (navigator.language || 'en').toLowerCase();
   return pref.startsWith('ja') ? 'ja' : 'en';
