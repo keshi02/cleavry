@@ -793,3 +793,99 @@
     from { opacity: 0; transform: translateX(-50%) translateY(-2px); }
     to   { opacity: 1; transform: translateX(-50%) translateY(0); }
   }
+
+  /* ──────────────────────────────────────────────────────────────────
+     Mobile / small-screen toolbar
+     ──────────────────────────────────────────────────────────────────
+     The desktop toolbar packs 30+ controls into a wrapping flex row.
+     On phones that wrapping cascade eats most of the viewport. We
+     compact things by:
+       - hiding text labels next to icons (data-tip carries the meaning)
+       - hiding group labels ("ツール:" / "サイズ:" / etc.)
+       - bumping touch-target padding to ~36px
+       - shrinking sliders so they fit on one row
+       - hiding non-critical buttons (fit / 100%) on the smallest screens
+  */
+  @media (max-width: 768px) {
+    #toolbar {
+      padding: 6px 8px;
+      gap: 6px;
+    }
+    .group {
+      padding: 0 4px;
+      gap: 4px;
+      border-right: none;
+    }
+    /* Hide section labels — "ツール:" / "サイズ:" / "硬度:" / "色許容度:". */
+    .group > label[data-i18n] {
+      display: none;
+    }
+    /* Hide checkbox-label text but keep the checkbox + icon visible. */
+    .group > label[data-i18n-tip] > span[data-i18n^="label."] {
+      display: none;
+    }
+    /* Hide text inside icon-text buttons; rely on data-tip + icon. */
+    .icon-btn-text > span[data-i18n] {
+      display: none;
+    }
+    /* Bigger touch targets and bigger glyphs. */
+    .icon-btn-text {
+      padding: 8px 10px;
+      min-width: 36px;
+      min-height: 36px;
+      justify-content: center;
+    }
+    .icon-btn-text svg {
+      width: 18px;
+      height: 18px;
+    }
+    .icon-btn {
+      width: 36px;
+      min-width: 36px;
+      height: 36px;
+    }
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+    /* Sliders must fit alongside icons on a phone screen. */
+    input[type=range] {
+      width: 90px;
+    }
+    /* The threshold number input next to "≤" / "px²" labels. */
+    input[type=number] {
+      width: 44px;
+    }
+    /* Hide the brand wordmark — saves ~80px of horizontal space.
+       The favicon / page title still convey the brand. */
+    .brand {
+      display: none;
+    }
+    /* Theme + actual-size buttons render plain text, give them
+       comparable padding so they don't collapse next to icon buttons. */
+    #theme-btn, #actual-btn {
+      padding: 8px 10px;
+      min-height: 36px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    /* On phones, drop secondary view controls. Pinch-to-zoom and
+       pan via touch still work; the explicit fit / 100% buttons are
+       redundant. */
+    #fit-btn, #actual-btn {
+      display: none;
+    }
+    /* Tighter slider so size + hardness + tolerance stack readably. */
+    input[type=range] {
+      width: 80px;
+    }
+    /* Empty-hint typography also shrinks so the shortcut row doesn't
+       wrap awkwardly on a 320px-wide phone. */
+    #empty-hint h2 {
+      font-size: 16px;
+    }
+    #empty-hint code {
+      font-size: 10px;
+    }
+  }
