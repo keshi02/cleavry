@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プライバシーポリシー — Cleavry</title>
+<meta name="robots" content="index,follow">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236c7eff%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M21%2012a9%209%200%201%201-9-9%22%2F%3E%3Cpath%20d%3D%22m17%208-5%204%2C0%200%200%200%22%2F%3E%3C%2Fsvg%3E">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fafafa;
+    --panel: #ffffff;
+    --text: #1a1a1a;
+    --muted: #666;
+    --accent: #4f46e5;
+    --border: #e5e5e5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1e;
+      --panel: #262626;
+      --text: #e8e8e8;
+      --muted: #888;
+      --accent: #6c7eff;
+      --border: #3a3a3a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+    line-height: 1.8;
+    padding: 40px 20px 80px;
+  }
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px 40px;
+  }
+  .crumb {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+  .crumb a { color: var(--accent); text-decoration: none; }
+  .crumb a:hover { text-decoration: underline; }
+  h1 { margin: 0 0 8px; font-size: 24px; font-weight: 600; }
+  .updated { font-size: 12px; color: var(--muted); margin-bottom: 28px; }
+  h2 { font-size: 16px; font-weight: 600; margin: 32px 0 12px; }
+  h2:first-of-type { margin-top: 0; }
+  p { margin: 0 0 12px; }
+  ul { padding-left: 22px; margin: 0 0 12px; }
+  li { margin-bottom: 6px; }
+  a { color: var(--accent); }
+  code {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 13px;
+  }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+  footer { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <div class="crumb"><a href="/">← Cleavry に戻る</a></div>
+
+  <h1>プライバシーポリシー</h1>
+  <div class="updated">最終更新日: 2026 年 5 月 8 日</div>
+
+  <p>
+    Cleavry（以下「本サービス」）は、利用者のプライバシー保護を最重要事項と
+    位置づけています。本ポリシーは、本サービスの利用にあたって取り扱う情報に
+    ついて定めるものです。
+  </p>
+
+  <h2>1. 取り扱う情報</h2>
+  <p>
+    本サービスはサーバーを持たない設計で運用されています。
+  </p>
+  <ul>
+    <li>画像データ・編集内容は、すべて利用者のブラウザ内（IndexedDB / localStorage）にのみ保存されます。</li>
+    <li>本サービスのサーバー、ML モデル提供元、その他の外部サービスへ利用者の画像データが送信されることは一切ありません。</li>
+  </ul>
+
+  <h2>2. 訪問の集計</h2>
+  <p>
+    アクセス状況の把握のため <a href="https://www.cloudflare.com/web-analytics/" target="_blank" rel="noopener noreferrer">Cloudflare Web Analytics</a> を利用しています。
+    Cookie は使用せず、IP アドレスは匿名化された形で集計され、個人を特定できる
+    情報は収集されません。
+  </p>
+
+  <h2>3. 第三者への提供</h2>
+  <p>
+    利用者から取得した情報を当方が第三者に提供することはありません。なお、
+    第 1 項の通り画像データは当方が取得していません。
+  </p>
+
+  <h2>4. 外部サービスとの連携</h2>
+  <ul>
+    <li>
+      AI 背景除去機能の初回利用時、ML モデルファイル（約 470MB）が
+      <a href="https://huggingface.co/" target="_blank" rel="noopener noreferrer">Hugging Face Hub</a> および
+      <a href="https://www.jsdelivr.com/" target="_blank" rel="noopener noreferrer">jsdelivr</a> CDN
+      から、利用者のブラウザに直接ダウンロードされます。当方は介在しません。
+    </li>
+    <li>
+      ダウンロード時、CDN 提供元・モデルホスト各社が独自にアクセスログを記録する場合があります。各社のプライバシーポリシーをご参照ください。
+    </li>
+  </ul>
+
+  <h2>5. 子どもの利用</h2>
+  <p>
+    本サービスは、年齢確認なくどなたでもご利用いただけます。
+  </p>
+
+  <h2>6. ポリシーの改定</h2>
+  <p>
+    本ポリシーは予告なく改定されることがあります。改定後の内容は本ページに掲載します。
+  </p>
+
+  <h2>7. お問い合わせ</h2>
+  <p>
+    本ポリシーに関するお問い合わせは <a href="mailto:support@cleavry.com">support@cleavry.com</a> までご連絡ください。
+  </p>
+
+  <hr>
+  <footer>
+    <p><a href="/">Cleavry</a> · <a href="/terms">利用規約</a></p>
+  </footer>
+</main>
+</body>
+</html>
