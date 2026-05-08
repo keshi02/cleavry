@@ -45,7 +45,7 @@ export default {
   'tip.autoCleanupThreshold': 'Minimum component size to keep (px²)',
   'tip.preserve': 'ON: keep original canvas size and pixel positions / OFF: crop to opaque area',
   'tip.autosave': 'Persists edits in your browser (IndexedDB). Restored on reload.\nTurning OFF also deletes any saved data',
-  'tip.showOrig': 'Overlay the original image at low opacity (compare what was removed)',
+  'tip.showOrig': 'Overlay the original image at low opacity (compare what was removed) (O)',
   'tip.origOpacity': 'Original-overlay opacity (0–100%)',
   'tip.feather': 'Soften jagged edges at save time\nApplies to the saved output\n(does not affect the working preview)',
   'tip.featherStrength': 'Feather strength (1–3 px)',

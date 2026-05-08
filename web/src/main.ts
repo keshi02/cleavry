@@ -1510,6 +1510,11 @@ function bindKeys() {
     if (key === 'e') { setTool('erase'); }
     if (key === 'r' && !cmd) { setTool('restore'); }
     if (key === 'w') { setTool(e.shiftKey ? 'restoreWand' : 'wand'); }
+    if (key === 'o' && !cmd && state.origData) {
+      e.preventDefault();
+      toggleOriginalOverlay(state.origData, state.imgW, state.imgH);
+      return;
+    }
     if (key === '[' || key === ']') {
       const dir = key === '[' ? -1 : 1;
       const now = performance.now();

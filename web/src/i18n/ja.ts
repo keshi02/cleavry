@@ -45,7 +45,7 @@ export default {
   'tip.autoCleanupThreshold': '自動ノイズ除去で削除する最小サイズ（px²）',
   'tip.preserve': 'ON: 元画像と同じサイズ・位置で保存（重ねると元の絵に戻る） / OFF: 中身のある部分だけ切り抜き',
   'tip.autosave': '編集をブラウザ内に自動保存。再読み込み時に復元できます。\nOFF にすると保存済みデータも削除されます',
-  'tip.showOrig': '元画像を半透明で重ねて表示（削られた領域の確認用）',
+  'tip.showOrig': '元画像を半透明で重ねて表示（削られた領域の確認用） (O)',
   'tip.origOpacity': '元画像オーバーレイの透明度（0〜100%）',
   'tip.feather': '保存時に縁をぼかしてジャギーを軽減\nON にしておくと出力に自動適用\n（プレビュー画面には反映されません）',
   'tip.featherStrength': '縁ぼかしの強度（1〜3px）',
