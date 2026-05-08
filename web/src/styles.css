@@ -78,6 +78,10 @@
   }
   /* Explicit dark uses the :root defaults — no override needed. */
   * { box-sizing: border-box; }
+  /* Honor the HTML `hidden` attribute even when more specific rules
+     (e.g. `.icon-btn-text { display: inline-flex }`) would otherwise
+     win on specificity. */
+  [hidden] { display: none !important; }
   html, body {
     margin: 0; padding: 0;
     height: 100%; width: 100%;
