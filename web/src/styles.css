@@ -421,6 +421,21 @@
     transition: width 0.1s linear;
   }
   #progress-box .hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  #progress-cancel {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+  }
+  #progress-cancel:hover { background: var(--accent); color: var(--on-accent); }
+  #progress-cancel[hidden] { display: none; }
   #help-overlay {
     /* fixed → centered against the viewport, not the workspace row */
     position: fixed;

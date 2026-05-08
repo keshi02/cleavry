@@ -93,7 +93,7 @@
           "name": "Why is the first AI run slow?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "The AI model (~470MB) is downloaded once on first use and cached in your browser. Subsequent runs start instantly."
+            "text": "When you click the AI background-removal button, the AI model (~470MB) is downloaded into your browser cache. A consent dialog appears on first use. Subsequent runs load instantly from cache."
           }
         },
         {
@@ -580,7 +580,7 @@
   <div class="feature-grid">
     <div class="feature">
       <h3>AI background removal</h3>
-      <p>BiRefNet runs in your browser via WebGPU. No server, no API key. Your image stays local.</p>
+      <p>BiRefNet runs in your browser via WebGPU. No server, no API key. Your image stays local. The first run downloads a ~470MB AI model into your browser cache; subsequent runs load instantly.</p>
     </div>
     <div class="feature">
       <h3>Manual touchups</h3>
@@ -619,7 +619,7 @@
     <dd>Nowhere. All processing — including the AI inference — happens on your own device. The site has no upload endpoint; it can't receive your image even if it tried.</dd>
 
     <dt>Why is the first AI run slow?</dt>
-    <dd>The model file (~470MB) downloads on first use, then caches in your browser. Subsequent runs are instant.</dd>
+    <dd>When you click the AI background-removal button, the AI model (~470MB) is downloaded into your browser cache. A consent dialog appears on first use. Subsequent runs load instantly from cache.</dd>
 
     <dt>Which browsers work?</dt>
     <dd>AI background removal needs WebGPU — Chrome, Edge, or Firefox latest. Safari can use the manual editing features but not the AI step (yet).</dd>

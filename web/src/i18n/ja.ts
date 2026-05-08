@@ -96,13 +96,13 @@ export default {
   'progress.restoreWand': '復元ワンド処理中…',
   'progress.detect': '要素を検出中…',
   'progress.zip': 'ZIP を生成中…',
-  'progress.aiInit': 'AI モデルを準備中…（初回は ~100MB のダウンロード）',
   'progress.aiFetch': 'AI モデルを取得中…',
   'progress.aiPrep': 'AI を準備中…',
   'progress.aiInfer': 'AI で背景除去中…',
   'progress.aiFinalize': '結果を反映中…',
   'progress.escHint': 'ESC キーで中断（変更は破棄されます）',
-  'progress.escHintReload': 'ESC キーでダウンロードを中断',
+  'progress.escHintReload': 'ESC キーまたは下のボタンでダウンロードを中断',
+  'progress.cancelBtn': 'ダウンロードを中断',
   'progress.png': 'PNG を生成中…',
 
   // Toasts
@@ -153,6 +153,12 @@ export default {
   'modal.cancelDownload.body': 'AI モデルのダウンロードを中断するにはページをリロードします。\n編集中の状態は失われます（自動保存は次回読込時に復元できます）。',
   'modal.cancelDownload.yes': '中断する',
   'modal.cancelDownload.no': '続行',
+
+  // Modal: AI consent (shown the first time the user clicks AI background removal)
+  'modal.aiConsent.title': 'AI 背景除去を初回利用しますか？',
+  'modal.aiConsent.body': '約 470MB の AI モデルをブラウザに保存します。2 回目以降はキャッシュから即座に動作します。',
+  'modal.aiConsent.yes': 'ダウンロードして続行',
+  'modal.aiConsent.no': 'キャンセル',
 
   // Help modal
   'help.title': 'ヘルプ',

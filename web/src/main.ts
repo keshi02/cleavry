@@ -928,13 +928,21 @@ async function runAIBackgroundRemoval() {
   if (isWandRunning()) return;
   if (state.separateMode || state.cleanupMode) return;
 
+  // First-time consent: the AI step needs a one-time ~470MB model
+  // download from huggingface.co. Make the download intent explicit
+  // so it isn't a surprise to the user (and isn't a surprise to
+  // Safe Browsing's "deceptive software download" classifier either).
+  if (!(await ensureAIConsent())) return;
+
   bgRemovalRunning = true;
   bgPhase = 'model-fetch';
   updateStatus();
-  // The AI flow starts in the abortable "downloading model" phase
-  // (the user can hit ESC to discard the page and try again later)
-  // and switches to non-cancellable once inference begins.
-  showProgress(t('progress.aiInit'), { cancel: 'reload' });
+  // The AI flow starts in the abortable model-fetch phase (the user
+  // can hit ESC or the in-overlay cancel button to discard the page
+  // and retry later) and switches to non-cancellable once inference
+  // begins. Show the model-fetch title from the start so it doesn't
+  // flash through a separate "preparing" label.
+  showProgress(t('progress.aiFetch'), { cancel: 'reload', onCancel: confirmCancelDownload });
 
   try {
     // workData → data-URL so transformers.js can decode it via fetch.
@@ -985,8 +993,12 @@ async function runAIBackgroundRemoval() {
 
 // transformers.js exposes no AbortSignal we can rely on, so the only
 // reliable way to terminate a half-finished model download is to
-// reload the tab. Confirm with the user first since reload nukes any
-// in-progress edits (autosave restores them next time).
+// reload the tab. Snapshot the current canvas first (in case the
+// debounced autosave hasn't fired yet) and mark the reload as
+// intentional so the post-reload restore skips the confirm modal —
+// otherwise the user gets dumped onto a blank canvas + a "restore?"
+// prompt, which is not what cancelling a download should feel like.
+const AUTO_RESTORE_KEY = 'cleavry.autoRestoreOnLoad';
 async function confirmCancelDownload() {
   const ok = await showModal({
     title: t('modal.cancelDownload.title'),
@@ -996,7 +1008,33 @@ async function confirmCancelDownload() {
       { label: t('modal.cancelDownload.no'), value: false },
     ],
   });
-  if (ok) location.reload();
+  if (!ok) return;
+  if (state.workData && state.imgW) {
+    try { await autosaveNow(); } catch { /* best effort */ }
+  }
+  try { sessionStorage.setItem(AUTO_RESTORE_KEY, '1'); } catch { /* ignore */ }
+  location.reload();
+}
+
+// First-time consent for the AI model download. Once accepted, remember
+// the choice in localStorage so we don't re-prompt every session.
+const AI_CONSENT_KEY = 'cleavry.aiConsent.v1';
+async function ensureAIConsent(): Promise<boolean> {
+  try {
+    if (localStorage.getItem(AI_CONSENT_KEY) === '1') return true;
+  } catch { /* private mode, fall through to prompt every time */ }
+  const ok = await showModal({
+    title: t('modal.aiConsent.title'),
+    message: t('modal.aiConsent.body'),
+    buttons: [
+      { label: t('modal.aiConsent.yes'), value: true, primary: true },
+      { label: t('modal.aiConsent.no'), value: false },
+    ],
+  });
+  if (ok) {
+    try { localStorage.setItem(AI_CONSENT_KEY, '1'); } catch { /* ignore */ }
+  }
+  return !!ok;
 }
 
 // ============================================================================
@@ -1367,19 +1405,32 @@ async function tryRestoreAutosave() {
   if (!state.autoSaveEnabled) return;
   const session = await loadSession();
   if (!session || !session.imgW) return;
-  const ageMin = Math.round((Date.now() - session.savedAt) / 60000);
-  const ok = await showModal({
-    title: t('modal.restore.title'),
-    message:
-      `${t('modal.restore.file')}: ${session.filename}\n` +
-      `${t('modal.restore.size')}: ${session.imgW} × ${session.imgH}\n` +
-      `${t('modal.restore.savedAt')}: ${ageMin} ${t('modal.restore.minutesAgo')}`,
-    buttons: [
-      { label: t('modal.restore.yes'), value: true, primary: true },
-      { label: t('modal.restore.no'), value: false },
-    ],
-  });
-  if (!ok) { clearAutosave(); return; }
+
+  // After a cancel-download reload we know the user was actively
+  // working — skip the prompt and restore silently.
+  let autoRestore = false;
+  try {
+    if (sessionStorage.getItem(AUTO_RESTORE_KEY) === '1') {
+      autoRestore = true;
+      sessionStorage.removeItem(AUTO_RESTORE_KEY);
+    }
+  } catch { /* private mode: fall through to the modal */ }
+
+  if (!autoRestore) {
+    const ageMin = Math.round((Date.now() - session.savedAt) / 60000);
+    const ok = await showModal({
+      title: t('modal.restore.title'),
+      message:
+        `${t('modal.restore.file')}: ${session.filename}\n` +
+        `${t('modal.restore.size')}: ${session.imgW} × ${session.imgH}\n` +
+        `${t('modal.restore.savedAt')}: ${ageMin} ${t('modal.restore.minutesAgo')}`,
+      buttons: [
+        { label: t('modal.restore.yes'), value: true, primary: true },
+        { label: t('modal.restore.no'), value: false },
+      ],
+    });
+    if (!ok) { clearAutosave(); return; }
+  }
 
   state.imgW = session.imgW;
   state.imgH = session.imgH;
@@ -1395,7 +1446,7 @@ async function tryRestoreAutosave() {
   fitToScreen();
   redraw();
   updateStatus();
-  showToast(t('toast.restored'));
+  if (!autoRestore) showToast(t('toast.restored'));
 }
 
 async function clearAutosave() {

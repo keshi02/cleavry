@@ -69,12 +69,34 @@ export async function segmentBackground(
   outH: number,
   onProgress?: (e: BgProgress) => void,
 ): Promise<Uint8Array> {
+  // transformers.js fires per-file 'progress' events for several
+  // shards (weights / config / processor). Each one resets the
+  // per-file `progress` back to 0, which the user reads as "the
+  // modal restarted." Aggregate by bytes across all files we've
+  // seen so the bar advances monotonically 0→100 across the whole
+  // model load.
+  //
+  // 'done' fires once per file too — and the previous code mapped
+  // both 'done' and 'ready' to the next phase, which prematurely
+  // flipped the cancel hint off the very first time any single file
+  // finished. We deliberately ignore 'done' here and rely on the
+  // post-`getSegmenter` "inferring" event below, which only fires
+  // after every file has actually loaded.
+  const bytesByFile = new Map<string, { loaded: number; total: number }>();
   const { model, processor, RawImage } = await getSegmenter(data => {
     if (!data) return;
-    if (data.status === 'progress' && typeof data.progress === 'number') {
-      onProgress?.({ phase: 'model-fetch', progress: Math.min(99, data.progress) });
-    } else if (data.status === 'ready' || data.status === 'done') {
-      onProgress?.({ phase: 'preparing', progress: 100 });
+    if (data.status === 'progress' && typeof data.loaded === 'number' && typeof data.total === 'number') {
+      bytesByFile.set(data.file ?? 'unknown', { loaded: data.loaded, total: data.total });
+      let loaded = 0, total = 0;
+      for (const v of bytesByFile.values()) { loaded += v.loaded; total += v.total; }
+      const pct = total > 0 ? (loaded / total) * 100 : 0;
+      onProgress?.({ phase: 'model-fetch', progress: Math.min(99, pct) });
+    } else if (data.status === 'done' && typeof data.file === 'string') {
+      // Pin the just-finished file to 100% so the aggregate doesn't
+      // stall under 100 if the last 'progress' event came in below
+      // total.
+      const e = bytesByFile.get(data.file);
+      if (e) bytesByFile.set(data.file, { loaded: e.total, total: e.total });
     }
   });
 

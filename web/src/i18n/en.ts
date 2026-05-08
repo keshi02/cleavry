@@ -96,13 +96,13 @@ export default {
   'progress.restoreWand': 'Running restore wand…',
   'progress.detect': 'Detecting components…',
   'progress.zip': 'Generating ZIP…',
-  'progress.aiInit': 'Preparing AI model… (first run downloads ~100MB)',
   'progress.aiFetch': 'Downloading AI model…',
   'progress.aiPrep': 'Preparing AI…',
   'progress.aiInfer': 'Running AI background removal…',
   'progress.aiFinalize': 'Applying result…',
   'progress.escHint': 'Press ESC to cancel (changes will be discarded)',
-  'progress.escHintReload': 'Press ESC to cancel the download',
+  'progress.escHintReload': 'Press ESC or the button below to cancel the download',
+  'progress.cancelBtn': 'Cancel download',
   'progress.png': 'Generating PNG…',
 
   // Toasts
@@ -153,6 +153,12 @@ export default {
   'modal.cancelDownload.body': 'Cancelling the AI model download will reload the page.\nUnsaved edits will be lost (auto-save can restore them on next load).',
   'modal.cancelDownload.yes': 'Cancel download',
   'modal.cancelDownload.no': 'Continue',
+
+  // Modal: AI consent (shown the first time the user clicks AI background removal)
+  'modal.aiConsent.title': 'Use AI background removal?',
+  'modal.aiConsent.body': 'A ~470MB AI model will be downloaded into your browser. Subsequent runs load instantly from cache.',
+  'modal.aiConsent.yes': 'Download and continue',
+  'modal.aiConsent.no': 'Cancel',
 
   // Help modal
   'help.title': 'Help',
