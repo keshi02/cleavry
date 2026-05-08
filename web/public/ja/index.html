@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Cleavry — Transparency editor in your browser</title>
-<meta name="description" content="Free, in-browser image transparency editor with AI background removal. Your images never leave your device. No ads, no signup, no usage limits.">
+<title>Cleavry — ブラウザで完結する透過処理エディタ</title>
+<meta name="description" content="ブラウザ上で動く画像透過処理エディタ。AI 背景除去と手動仕上げをすべてあなたの端末で。広告なし、登録不要、利用回数無制限。">
 <meta name="theme-color" content="#1e1e1e">
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://cleavry.com/en">
-<meta property="og:title" content="Cleavry — Transparency editor in your browser">
-<meta property="og:description" content="Free in-browser AI background removal + manual touchups. Your images never leave your device.">
-<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://cleavry.com/ja">
+<meta property="og:title" content="Cleavry — ブラウザで完結する透過処理エディタ">
+<meta property="og:description" content="AI 背景除去 + 手動仕上げをブラウザ内で。画像は外部に送信されません。">
+<meta property="og:locale" content="ja_JP">
 <meta property="og:site_name" content="Cleavry">
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Cleavry">
-<meta name="twitter:description" content="Free in-browser AI background removal. Your images never leave your device.">
+<meta name="twitter:description" content="ブラウザ完結の透過処理エディタ。画像は外部送信されません。">
 
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236c7eff%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M21%2012a9%209%200%201%201-9-9%22%2F%3E%3Cpath%20d%3D%22m17%208-5%204%2C0%200%200%200%22%2F%3E%3C%2Fsvg%3E">
 
@@ -40,7 +40,7 @@
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
     line-height: 1.7;
   }
   a { color: var(--accent); text-decoration: none; }
@@ -84,14 +84,14 @@
     text-align: center;
   }
   .hero h1 {
-    font-size: 40px;
-    line-height: 1.25;
+    font-size: 36px;
+    line-height: 1.4;
     margin: 0 0 18px;
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
   }
   .hero .tagline {
-    font-size: 17px;
+    font-size: 16px;
     color: var(--muted);
     margin: 0 0 32px;
     max-width: 620px;
@@ -117,18 +117,6 @@
     justify-content: center;
     flex-wrap: wrap;
   }
-  .cta-secondary {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text);
-    padding: 12px 24px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    font-size: 16px;
-    font-weight: 500;
-  }
-  .cta-secondary:hover { background: var(--panel-hi); text-decoration: none; }
 
   section {
     max-width: 960px;
@@ -136,7 +124,7 @@
     padding: 40px 24px;
   }
   section h2 {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 600;
     margin: 0 0 20px;
   }
@@ -179,7 +167,7 @@
     margin: 0;
     font-size: 14px;
     color: var(--muted);
-    line-height: 1.6;
+    line-height: 1.7;
   }
 
   .faq dt {
@@ -191,7 +179,7 @@
     margin: 0;
     color: var(--muted);
     font-size: 14px;
-    line-height: 1.7;
+    line-height: 1.8;
   }
 
   footer {
@@ -209,127 +197,127 @@
 <body>
 
 <nav class="nav">
-  <a class="brand" href="/en">
+  <a class="brand" href="/ja">
     <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M16 8l-5 4 5 4"/></svg>
     Cleavry
   </a>
-  <span class="lang">English · <a href="/ja">日本語</a></span>
+  <span class="lang">日本語 · <a href="/en">English</a></span>
 </nav>
 
 <section class="hero">
-  <h1>Transparency editor<br>that runs in your browser</h1>
+  <h1>ブラウザで完結する<br>透過処理エディタ</h1>
   <p class="tagline">
-    AI background removal and manual touchups, entirely on your device.
-    No ads, no signup, no usage limits, no data collection. Free forever.
+    AI 背景除去と手動仕上げをすべてあなたの端末上で実行。<br>
+    画像は外部に送信されません。広告なし、登録不要、利用回数無制限。完全無料。
   </p>
   <div class="cta-row">
-    <a class="cta" href="/">Try Cleavry now →</a>
+    <a class="cta" href="/">今すぐ Cleavry を試す →</a>
   </div>
 </section>
 
 <section>
-  <h2>Why Cleavry?</h2>
+  <h2>なぜ Cleavry?</h2>
   <table class="compare">
     <thead>
       <tr>
         <th></th>
-        <th>Typical SaaS background removers</th>
+        <th>多くの背景除去サービス</th>
         <th>Cleavry</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td>Where your image is processed</td>
-        <td>Uploaded to a server</td>
-        <td><span class="yes">Stays on your device</span></td>
+        <td>画像の処理場所</td>
+        <td>サーバーにアップロード</td>
+        <td><span class="yes">あなたの端末内のみ</span></td>
       </tr>
       <tr>
-        <td>Ads / trackers</td>
-        <td>Yes</td>
-        <td><span class="yes">None</span></td>
+        <td>広告 / トラッカー</td>
+        <td>あり</td>
+        <td><span class="yes">なし</span></td>
       </tr>
       <tr>
-        <td>Usage limits</td>
-        <td>Free tier limited (low-res, daily quota)</td>
-        <td><span class="yes">Unlimited</span></td>
+        <td>利用回数制限</td>
+        <td>無料は低解像度・1 日の制限あり</td>
+        <td><span class="yes">無制限</span></td>
       </tr>
       <tr>
-        <td>Account / signup</td>
-        <td>Required</td>
-        <td><span class="yes">Not required</span></td>
+        <td>アカウント登録</td>
+        <td>必要</td>
+        <td><span class="yes">不要</span></td>
       </tr>
       <tr>
-        <td>Time to first edit</td>
-        <td>Sign in → wait → process</td>
-        <td><span class="yes">Open URL, drop image, done</span></td>
+        <td>編集開始まで</td>
+        <td>サインイン → 待機 → 処理</td>
+        <td><span class="yes">URL を開いてドロップ、即終了</span></td>
       </tr>
     </tbody>
   </table>
 </section>
 
 <section>
-  <h2>What you can do</h2>
+  <h2>できること</h2>
   <div class="feature-grid">
     <div class="feature">
-      <h3>AI background removal</h3>
-      <p>BiRefNet runs in your browser via WebGPU. No server, no API key. Your image stays local.</p>
+      <h3>AI 背景除去</h3>
+      <p>BiRefNet がブラウザの WebGPU 上で動作。サーバー不要、API キー不要。画像は端末内に留まります。</p>
     </div>
     <div class="feature">
-      <h3>Manual touchups</h3>
-      <p>Eraser and restore brush with adjustable size and hardness. Fix the parts the AI got wrong.</p>
+      <h3>手動仕上げ</h3>
+      <p>消しゴム / 復元ブラシをサイズ・硬度を調整しながら使用。AI が誤って削った部分を直せます。</p>
     </div>
     <div class="feature">
-      <h3>Magic wand</h3>
-      <p>One-click flood-fill by color similarity, with optional rectangular scope.</p>
+      <h3>マジックワンド</h3>
+      <p>クリック 1 回で連続同色を一括透明化。矩形範囲指定で適用範囲を絞れます。</p>
     </div>
     <div class="feature">
-      <h3>Noise cleanup</h3>
-      <p>Remove leftover specks by connected component, or auto-clean by area threshold.</p>
+      <h3>ノイズ削除</h3>
+      <p>連結成分単位で消し残しを除去。閾値以下の小さな成分を自動でワンタップ削除も可能。</p>
     </div>
     <div class="feature">
-      <h3>Edge feathering</h3>
-      <p>Soften jagged edges at save time without changing your working image.</p>
+      <h3>縁ぼかし</h3>
+      <p>保存時に縁を滑らかに整形。プレビューには影響しません。</p>
     </div>
     <div class="feature">
-      <h3>Original overlay</h3>
-      <p>Compare against the source image to see exactly what's been removed.</p>
+      <h3>元画像比較</h3>
+      <p>元画像を半透明で重ねて表示。削られた領域を確認しながら編集できます。</p>
     </div>
     <div class="feature">
-      <h3>Auto-save</h3>
-      <p>Edits persist in IndexedDB. Refresh and pick up where you left off.</p>
+      <h3>自動保存</h3>
+      <p>編集状態は IndexedDB に自動保存。リロードしても続きから編集できます。</p>
     </div>
     <div class="feature">
-      <h3>PWA</h3>
-      <p>Install to your home screen. Works offline after the first visit.</p>
+      <h3>PWA 対応</h3>
+      <p>ホーム画面に追加可能。初回アクセス後はオフラインでも動作します。</p>
     </div>
   </div>
 </section>
 
 <section class="faq">
-  <h2>FAQ</h2>
+  <h2>よくある質問</h2>
   <dl>
-    <dt>Is it really free?</dt>
-    <dd>Yes. Forever. The site has no ads or trackers. There is no paid tier today; if a Pro tier ships in the future, it will add features on top of the free tier (which will keep working as-is).</dd>
+    <dt>本当に無料ですか？</dt>
+    <dd>はい、永続的に無料です。広告もトラッカーもありません。現時点で有料プランはありません。将来 Pro プランを追加する場合も、現在の機能はそのまま無料で使えます。</dd>
 
-    <dt>Where does my image go?</dt>
-    <dd>Nowhere. All processing — including the AI inference — happens on your own device. The site has no upload endpoint; it can't receive your image even if it tried.</dd>
+    <dt>私の画像はどこに送られますか？</dt>
+    <dd>どこにも送られません。AI 推論を含むすべての処理はあなたの端末内で行われます。サーバーへのアップロード機能自体が存在しません。</dd>
 
-    <dt>Why is the first AI run slow?</dt>
-    <dd>The model file (~470MB) downloads on first use, then caches in your browser. Subsequent runs are instant.</dd>
+    <dt>初回の AI 処理が遅いのはなぜ？</dt>
+    <dd>AI モデル（約 470MB）が初回利用時にダウンロードされ、ブラウザにキャッシュされます。2 回目以降は即座に動作します。</dd>
 
-    <dt>Which browsers work?</dt>
-    <dd>AI background removal needs WebGPU — Chrome, Edge, or Firefox latest. Safari can use the manual editing features but not the AI step (yet).</dd>
+    <dt>対応ブラウザは？</dt>
+    <dd>AI 背景除去には WebGPU 対応のブラウザ（Chrome、Edge、Firefox の最新版）が必要です。Safari は手動編集機能のみ動作します（AI は現状非対応）。</dd>
 
-    <dt>How can I support the developer?</dt>
-    <dd>The project is one person's labor of love. <a href="https://buymeacoffee.com/chikubo" target="_blank" rel="noopener noreferrer">Buy me a coffee</a> if Cleavry saved you time.</dd>
+    <dt>開発者を支援したいです</dt>
+    <dd>このプロジェクトは個人開発で運営しています。Cleavry が役に立ったら <a href="https://buymeacoffee.com/chikubo" target="_blank" rel="noopener noreferrer">Buy me a coffee</a> でサポートしていただけると励みになります。</dd>
   </dl>
 </section>
 
 <footer>
-  <a href="/ja">日本語</a>
-  <a href="/privacy">Privacy</a>
-  <a href="/terms">Terms</a>
-  <a href="mailto:support@cleavry.com">Contact</a>
+  <a href="/en">English</a>
+  <a href="/privacy">プライバシーポリシー</a>
+  <a href="/terms">利用規約</a>
+  <a href="mailto:support@cleavry.com">お問い合わせ</a>
   <a href="https://buymeacoffee.com/chikubo" target="_blank" rel="noopener noreferrer">Buy me a coffee</a>
   <p style="margin-top: 16px;">© 2026 Sui Yamamoto</p>
 </footer>
