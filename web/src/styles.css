@@ -248,6 +248,12 @@
     touch-action: none;
     overscroll-behavior: contain;
   }
+  /* Wand tools have no brush-radius overlay, so the workspace's default
+     `cursor: none` would leave the user without any visible pointer.
+     Placed before the pan / separate / rect-select rules so those modes
+     can override the crosshair when their class is also present. */
+  #workspace.wand-mode,
+  #workspace.wand-mode * { cursor: crosshair; }
   /* Force the pan cursor onto every descendant. Children (canvas, overlays)
      would otherwise inherit `cursor: none` from the workspace default and
      visually "lose" the grab cursor as soon as the pointer moves over them. */

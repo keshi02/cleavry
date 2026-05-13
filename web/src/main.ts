@@ -1113,6 +1113,9 @@ function setTool(name) {
   if (tolDisplay) tolDisplay.textContent = isBrush ? '—' : String(state.tolerance);
   // Crosshair cursor while in rect-select mode.
   workspace.classList.toggle('rect-select-mode', name === 'rectSelect');
+  // Wand tools have no brush ring, so without this the workspace's
+  // `cursor: none` would leave the user without any visible pointer.
+  workspace.classList.toggle('wand-mode', name === 'wand' || name === 'restoreWand');
   // Show the rect controls when a wand or rect-select is active and a
   // rectangle is currently set (or being created).
   updateRectControlsVisibility();
