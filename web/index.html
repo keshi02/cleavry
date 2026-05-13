@@ -88,10 +88,10 @@
       <button id="open-btn" class="icon-btn-text" data-i18n-aria="btn.open" data-i18n-tip="tip.open"><svg><use href="#i-folder-open"/></svg> <span data-i18n="btn.open">開く</span></button>
       <input type="file" id="file-input" accept="image/png,image/jpeg" hidden>
       <button id="ai-bg-btn" class="icon-btn-text" data-i18n-aria="btn.aiBg" data-i18n-tip="tip.aiBg" disabled><svg><use href="#i-sparkles"/></svg> <span data-i18n="btn.aiBg">AI 背景除去</span></button>
-      <button id="ai-input-btn" class="icon-btn-text" data-i18n-aria="btn.aiInput" data-i18n-tip="tip.aiInput" disabled hidden><svg><use href="#i-file-down"/></svg> <span data-i18n="btn.aiInput">AI出力読込</span></button>
+      <button id="ai-input-btn" class="icon-btn-text" data-i18n-aria="btn.aiInput" data-i18n-tip="tip.aiInput" disabled><svg><use href="#i-file-down"/></svg> <span data-i18n="btn.aiInput">AI出力読込</span></button>
       <input type="file" id="ai-file-input" accept="image/png,image/jpeg" hidden>
       <button id="save-btn" class="icon-btn-text" data-i18n-aria="btn.save" data-i18n-tip="tip.save" disabled><svg><use href="#i-download"/></svg> <span data-i18n="btn.save">保存</span></button>
-      <select id="save-format" data-i18n-tip="tip.saveFormat" disabled hidden>
+      <select id="save-format" data-i18n-tip="tip.saveFormat" disabled>
         <option value="png" selected>PNG</option>
         <option value="webp">WebP</option>
         <option value="jpeg">JPEG</option>
@@ -248,14 +248,8 @@
         <div class="help-section" data-section="features">
         <dl>
           <dt><svg class="lucide-inline"><use href="#i-sparkles"/></svg>AI 背景除去</dt><dd>ブラウザ内 AI で自動背景除去（API 不要・画像は外部送信なし）。対応ブラウザ推奨。初回のみ ~470MB のダウンロード</dd>
-          <!-- Pro candidates — hidden until Pro tier launches.
           <dt><svg class="lucide-inline"><use href="#i-file-down"/></svg>AI出力読込</dt><dd>読み込んだ元画像を透過処理した画像を取り込む（元画像は保持され、復元ブラシで取り戻せます）</dd>
           <dt><svg class="lucide-inline"><use href="#i-scissors"/></svg>分離保存</dt><dd>つながった要素を検出し、選んだものを個別 PNG（ZIP）として保存</dd>
-          -->
-          <!-- Outline-cleanup line below mentions 分離保存 in passing —
-               Phrasing kept simple for the free tier. -->
-          <!-- noop placeholder so the list isn't visually empty if both
-               above are removed; kept inline for now. -->
           <dt><svg class="lucide-inline"><use href="#i-wind"/></svg>ノイズ削除</dt><dd>つながった要素を表示、残すものを選択して他を一括透明化（緑＝残す / 赤＝削除）</dd>
           <dt><svg class="lucide-inline"><use href="#i-wand"/></svg>自動ノイズ除去</dt><dd>設定サイズ以下の小さな要素を確認なしでワンタップ削除</dd>
           <dt><svg class="lucide-inline"><use href="#i-feather"/></svg>縁ぼかし</dt><dd>保存時に縁をぼかしてジャギーを軽減するトグル（プレビューには反映されない）</dd>
