@@ -10,7 +10,7 @@
 // when a rect is cleared, drawing the component overlay on top of the
 // transformed canvas) are injected via setRenderHooks().
 
-import { state } from '../state';
+import { state, MaterialLayer } from '../state';
 import { $ } from '../utils/dom';
 import { clamp } from '../utils/clamp';
 
@@ -21,6 +21,32 @@ export const workspace = $('workspace');
 export const cursor = $('cursor-overlay');
 export const rectOverlay = $<HTMLCanvasElement>('rect-overlay');
 const rectOverlayCtx = rectOverlay.getContext('2d')!;
+export const materialOverlay = $<HTMLCanvasElement>('material-overlay');
+const materialOverlayCtx = materialOverlay.getContext('2d')!;
+
+// One offscreen canvas per material. Created lazily, repainted from
+// material.data only when needed. Cleared when a material is removed.
+const materialCanvasCache = new Map<string, HTMLCanvasElement>();
+
+function getMaterialCanvas(m: MaterialLayer): HTMLCanvasElement {
+  let c = materialCanvasCache.get(m.id);
+  if (!c || c.width !== m.w || c.height !== m.h) {
+    c = document.createElement('canvas');
+    c.width = m.w;
+    c.height = m.h;
+    materialCanvasCache.set(m.id, c);
+  }
+  c.getContext('2d')!.putImageData(
+    new ImageData(m.data as Uint8ClampedArray<ArrayBuffer>, m.w, m.h),
+    0, 0,
+  );
+  return c;
+}
+
+export function invalidateMaterialCache(id?: string): void {
+  if (id) materialCanvasCache.delete(id);
+  else materialCanvasCache.clear();
+}
 
 interface RenderHooks {
   refreshToolButtons?: () => void;
@@ -38,6 +64,13 @@ export function redraw(): void {
     new ImageData(state.workData as Uint8ClampedArray<ArrayBuffer>, state.imgW, state.imgH),
     0, 0,
   );
+  // Composite each material on top of the base. drawImage honours the
+  // material's alpha so transparent pixels show the base through.
+  for (const m of state.materials) {
+    ctx.drawImage(getMaterialCanvas(m), m.x, m.y);
+  }
+  // applyTransform repaints the material outline (and any other overlay
+  // that lives inside #canvas-wrap), so there's no separate call here.
   applyTransform();
 }
 
@@ -48,6 +81,43 @@ export function applyTransform(): void {
   canvasWrap.style.height = state.imgH + 'px';
   if (state.separateMode || state.cleanupMode) hooks.drawComponentOverlay?.();
   if (state.rectSelection) drawRectOverlay();
+  drawMaterialOverlay();
+}
+
+// Dashed outline around the currently-selected material so the user
+// knows which layer their brush / wand will edit and what they're
+// about to drag with the move tool.
+export function drawMaterialOverlay(): void {
+  if (!state.imgW) {
+    materialOverlay.classList.remove('show');
+    return;
+  }
+  const active = state.activeMaterialId
+    ? state.materials.find(m => m.id === state.activeMaterialId)
+    : null;
+  if (!active) {
+    materialOverlay.classList.remove('show');
+    return;
+  }
+  materialOverlay.width = state.imgW;
+  materialOverlay.height = state.imgH;
+  materialOverlay.classList.add('show');
+
+  const c = materialOverlayCtx;
+  c.clearRect(0, 0, state.imgW, state.imgH);
+  const lineW = Math.max(0.5, 2 / state.zoom);
+  const dash  = Math.max(2, 8 / state.zoom);
+  const gap   = Math.max(1, 4 / state.zoom);
+  c.lineWidth = lineW;
+  c.strokeStyle = '#ffce4d';
+  c.setLineDash([dash, gap]);
+  c.strokeRect(
+    active.x + lineW / 2,
+    active.y + lineW / 2,
+    Math.max(0, active.w - lineW),
+    Math.max(0, active.h - lineW),
+  );
+  c.setLineDash([]);
 }
 
 export function drawRectOverlay(): void {

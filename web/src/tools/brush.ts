@@ -1,40 +1,49 @@
 // Brush — paint a single dab (applyBrushDab) or interpolate dabs along
-// a line (applyStroke). Reads state directly: brushSize, brushHardness,
-// current tool, workData / origData. Writes into workData.
+// a line (applyStroke). Coordinates come in as base-canvas coords;
+// the brush translates them into the active layer's local space and
+// operates on that layer's pixel buffer.
 //
 // Two modes:
 //   - erase  : reduces alpha by `factor` (factor = 1 inside the hard
 //              radius, 0 at the outer feather edge, smooth cosine in
 //              between)
-//   - restore: lerps RGBA toward origData by `factor`
+//   - restore: lerps RGBA toward the layer's origData by `factor`
 //
 // Color tolerance is a wand-only feature; the brush always paints
 // every pixel inside its radius regardless of color.
 
 import { state } from '../state';
+import { getActiveLayer } from '../layers/active';
+import { invalidateMaterialCache } from '../canvas/render';
 
 export function applyBrushDab(cx: number, cy: number): void {
-  const data = state.workData;
-  const orig = state.origData;
-  if (!data || !orig) return;
+  const layer = getActiveLayer();
+  if (!layer) return;
+  // Translate base-canvas coords into the layer's local space.
+  const lcx = cx - layer.offsetX;
+  const lcy = cy - layer.offsetY;
+
   const r = state.brushSize;
   const r2 = r * r;
   const hardness = state.brushHardness / 100;
   const innerR = r * hardness;
   const featherSpan = r - innerR;
 
-  const x0 = Math.max(0, Math.floor(cx - r));
-  const y0 = Math.max(0, Math.floor(cy - r));
-  const x1 = Math.min(state.imgW - 1, Math.ceil(cx + r));
-  const y1 = Math.min(state.imgH - 1, Math.ceil(cy + r));
+  const x0 = Math.max(0, Math.floor(lcx - r));
+  const y0 = Math.max(0, Math.floor(lcy - r));
+  const x1 = Math.min(layer.w - 1, Math.ceil(lcx + r));
+  const y1 = Math.min(layer.h - 1, Math.ceil(lcy + r));
+  if (x1 < 0 || y1 < 0 || x0 >= layer.w || y0 >= layer.h) return;
 
-  const W = state.imgW;
+  const W = layer.w;
+  const data = layer.data;
+  const orig = layer.origData;
   const isErase = state.tool === 'erase';
 
   for (let py = y0; py <= y1; py++) {
-    const dy = py - cy;
+    const dy = py - lcy;
     for (let px = x0; px <= x1; px++) {
-      const dx = px - cx;
+      const dx = px - lcx;
       const dist2 = dx * dx + dy * dy;
       if (dist2 > r2) continue;
       const dist = Math.sqrt(dist2);
@@ -61,6 +70,9 @@ export function applyBrushDab(cx: number, cy: number): void {
         }
       }
     }
+  }
+  if (layer.isMaterial && layer.materialId) {
+    invalidateMaterialCache(layer.materialId);
   }
 }
 

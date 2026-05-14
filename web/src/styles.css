@@ -339,6 +339,73 @@
     image-rendering: pixelated;
   }
   #rect-overlay.show { display: block; }
+  #material-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    display: none;
+    image-rendering: pixelated;
+  }
+  #material-overlay.show { display: block; }
+  #layer-panel {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--panel-hi);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    min-width: 168px;
+    max-width: 220px;
+    font-size: 12px;
+    color: var(--text);
+    z-index: 5;
+    display: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  }
+  #layer-panel.show { display: block; }
+  .layer-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-muted, var(--text));
+    opacity: 0.85;
+  }
+  .layer-panel-title svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+  #layer-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  #layer-list li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    border-radius: 5px;
+    cursor: pointer;
+    user-select: none;
+  }
+  #layer-list li:hover { background: var(--panel); }
+  #layer-list li.active {
+    background: var(--accent-bg, rgba(216, 160, 76, 0.18));
+    outline: 1px solid var(--accent);
+  }
+  #layer-list .layer-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #layer-list .layer-del {
+    background: none;
+    border: none;
+    color: inherit;
+    opacity: 0.55;
+    padding: 2px;
+    cursor: pointer;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+  }
+  #layer-list .layer-del:hover { opacity: 1; background: rgba(220, 70, 70, 0.18); color: #dc4646; }
+  #layer-list .layer-del svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+  #workspace.move-mode,
+  #workspace.move-mode * { cursor: move; }
   #workspace.separate-mode,
   #workspace.separate-mode * { cursor: pointer; }
   #separate-bar, #cleanup-bar {

@@ -10,6 +10,7 @@ export default {
   'btn.autoCleanup': 'Auto cleanup',
   'btn.showOrig': 'Show original',
   'btn.feather': 'Feather',
+  'btn.addMaterial': 'Add material',
   'btn.fit': 'Fit',
   'btn.actual': '100%',
   'btn.help': 'Help',
@@ -20,6 +21,7 @@ export default {
   'tool.wand': 'Wand',
   'tool.restoreWand': 'Restore wand',
   'tool.rect': 'Rect',
+  'tool.move': 'Move',
 
   // Toggles & labels
   'label.preserve': 'Preserve canvas',
@@ -54,6 +56,8 @@ export default {
   'tip.toolWand': 'Magic wand (W)',
   'tip.toolRestoreWand': 'Restore wand (Shift+W) — flood-fill restore from the original image',
   'tip.toolRect': 'Rect-select to constrain the wand',
+  'tip.toolMove': 'Drag to move the active material (material layers only)',
+  'tip.addMaterial': 'Add an image as a material layer. Move, erase, and restore it on top of the base image',
   'tip.rectControls': 'Wand-scope rectangle. Switch between "inside only" and "outside only"',
   'tip.undo': 'Undo (Cmd+Z)',
   'tip.redo': 'Redo (Cmd+Shift+Z)',
@@ -81,12 +85,19 @@ export default {
   'status.toolWand': 'Wand',
   'status.toolRestoreWand': 'Restore wand',
   'status.toolRect': 'Rect-select',
+  'status.toolMove': 'Move',
   'status.history': 'History',
   'hint.erase': 'Drag to erase / [ ] for size / Space+drag to pan',
   'hint.restore': 'Drag to restore / [ ] for size',
   'hint.wand': 'Click to flood-fill by color / use Tolerance to widen',
   'hint.restoreWand': 'Click to flood-fill restore from the original image',
   'hint.rect': 'Drag to draw rect / ESC to clear',
+  'hint.move': 'Drag to move the material / switch layers from the panel',
+
+  // Layer panel
+  'layers.title': 'Layers',
+  'layers.base': 'Base image',
+  'layers.delete': 'Delete',
 
   // Drop overlay
   'drop.overlay': 'Drop image here',

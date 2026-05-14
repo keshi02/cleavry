@@ -35,8 +35,11 @@ import {
   setRenderHooks,
   redraw, applyTransform, drawRectOverlay, clearRectSelection,
   fitToScreen as fitToScreenImpl, actualSize as actualSizeImpl,
-  screenToImage, updateCursor,
+  screenToImage, updateCursor, drawMaterialOverlay,
+  invalidateMaterialCache,
 } from './canvas/render';
+import { getActiveMaterial, getActiveLayer, nextMaterialId } from './layers/active';
+import { MaterialLayer } from './state';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -71,23 +74,32 @@ function updateStatus() {
     wand:        t('status.toolWand'),
     restoreWand: t('status.toolRestoreWand'),
     rectSelect:  t('status.toolRect'),
+    move:        t('status.toolMove'),
   })[state.tool] || state.tool;
+  // Undo/redo display reflects whichever layer the user is editing.
+  const activeMat = getActiveMaterial();
+  const uLen = activeMat ? activeMat.undo.length : state.undo.length;
+  const rLen = activeMat ? activeMat.redo.length : state.redo.length;
   $('undo-status').textContent = state.imgW
-    ? `${t('status.history')}: ${state.undo.length} / ${state.maxUndo}`
+    ? `${t('status.history')}: ${uLen} / ${state.maxUndo}`
     : '';
+  // Base-only features stay tied to workData; the material-add button
+  // also requires a base image as the host canvas.
   $('save-btn').disabled = !state.workData;
   $('save-format').disabled = !state.workData;
-  $('separate-btn').disabled = !state.workData;
-  $('cleanup-btn').disabled = !state.workData;
-  $('auto-cleanup-btn').disabled = !state.workData;
-  $('ai-bg-btn').disabled = !state.workData || bgRemovalRunning;
-  $('ai-input-btn').disabled = !state.workData;
+  $('separate-btn').disabled = !state.workData || !!activeMat;
+  $('cleanup-btn').disabled = !state.workData || !!activeMat;
+  $('auto-cleanup-btn').disabled = !state.workData || !!activeMat;
+  $('ai-bg-btn').disabled = !state.workData || bgRemovalRunning || !!activeMat;
+  $('ai-input-btn').disabled = !state.workData || !!activeMat;
   $('show-orig-btn').disabled = !state.workData;
   $('orig-opacity').disabled = !state.workData;
   $('feather-btn').disabled = !state.workData;
   $('feather-strength').disabled = !state.workData;
-  $('undo-btn').disabled = state.undo.length === 0;
-  $('redo-btn').disabled = state.redo.length === 0;
+  const matAddBtn = $('material-add-btn');
+  if (matAddBtn) matAddBtn.disabled = !state.workData;
+  $('undo-btn').disabled = uLen === 0;
+  $('redo-btn').disabled = rLen === 0;
 }
 
 // ============================================================================
@@ -138,6 +150,12 @@ function loadImageFromFile(file) {
     state.workData = new Uint8ClampedArray(data.data);
     state.undo = [];
     state.redo = [];
+    // New base image — drop any materials carried over from a previous
+    // session. Their offsets and sizes were tied to the old canvas.
+    state.materials = [];
+    state.activeMaterialId = null;
+    invalidateMaterialCache();
+    renderLayerPanel();
     if (state.separateMode) exitSeparateMode();
     if (state.cleanupMode) exitCleanupMode();
     clearFeatherToggle();
@@ -339,10 +357,34 @@ function onPointerDown(e) {
     return;
   }
 
+  // Move tool: drag the active material around the canvas. The drag is
+  // tracked in screen pixels (and converted back to image-space via the
+  // current zoom) so the material follows the pointer 1:1 regardless of
+  // how zoomed-in the view is.
+  if (state.tool === 'move') {
+    const mat = getActiveMaterial();
+    if (!mat) return;
+    state.isMovingMaterial = true;
+    state.moveStartScreen = { x: e.clientX, y: e.clientY };
+    state.moveStartLayer = { x: mat.x, y: mat.y };
+    // Take an undo snapshot of (x, y) — re-using the data snapshot is
+    // overkill for a pure-move. We push *no* data snapshot here; for now
+    // moves aren't included in undo. (Material edits still are.)
+    e.preventDefault();
+    return;
+  }
+
   if (state.tool === 'wand' || state.tool === 'restoreWand') {
     // Hold off on firing the wand: if the user starts dragging, we
     // reinterpret the press as a rect rebuild. A plain click (no drag)
-    // falls through to the wand on pointerup.
+    // falls through to the wand on pointerup. Material wand fires
+    // immediately on click (no rect support on materials).
+    const isMaterial = !!getActiveMaterial();
+    if (isMaterial) {
+      magicWandAt(x, y);
+      e.preventDefault();
+      return;
+    }
     const cx = clamp(x, 0, state.imgW - 1);
     const cy = clamp(y, 0, state.imgH - 1);
     state.rectDragStart = { x: cx, y: cy };
@@ -384,6 +426,20 @@ function onPointerMove(e) {
     state.panX = state.panStartPos.x + dx;
     state.panY = state.panStartPos.y + dy;
     applyTransform();
+    return;
+  }
+
+  // Move tool drag: translate the screen-delta back into image coords
+  // and apply to the material's offset. Updates the dashed outline +
+  // the composite each frame.
+  if (state.isMovingMaterial) {
+    const mat = getActiveMaterial();
+    if (!mat) { state.isMovingMaterial = false; return; }
+    const dx = (e.clientX - state.moveStartScreen.x) / state.zoom;
+    const dy = (e.clientY - state.moveStartScreen.y) / state.zoom;
+    mat.x = Math.round(state.moveStartLayer.x + dx);
+    mat.y = Math.round(state.moveStartLayer.y + dy);
+    redraw();
     return;
   }
 
@@ -463,6 +519,12 @@ function onPointerUp(e) {
   if (state.isPanning) {
     state.isPanning = false;
     workspace.classList.remove('panning');
+  }
+  if (state.isMovingMaterial) {
+    state.isMovingMaterial = false;
+    state.moveStartScreen = null;
+    state.moveStartLayer = null;
+    scheduleAutosave();
   }
   if (state.isDrawing) {
     const wasBrushTool = state.tool === 'erase' || state.tool === 'restore';
@@ -1043,8 +1105,12 @@ async function ensureAIConsent(): Promise<boolean> {
 async function saveAsPNG() {
   if (!state.workData) return;
   try {
+    // Flatten base + materials before save so the export is a single
+    // base-sized image with everything composited in.
+    const flat = compositeAllLayers();
+    if (!flat) return;
     const { outW, outH } = await saveImage({
-      data: state.workData,
+      data: flat,
       W: state.imgW,
       H: state.imgH,
       filename: state.filename || 'image',
@@ -1060,6 +1126,175 @@ async function saveAsPNG() {
 }
 
 // ============================================================================
+// Material layers
+// ============================================================================
+// Composite the base + every material onto a fresh base-sized buffer.
+// Used by save (so the export is flat) and could be used elsewhere if a
+// caller ever needs the visible result rather than the active layer.
+function compositeAllLayers(): Uint8ClampedArray | null {
+  if (!state.workData) return null;
+  if (state.materials.length === 0) return state.workData;
+  const c = document.createElement('canvas');
+  c.width = state.imgW;
+  c.height = state.imgH;
+  const cctx = c.getContext('2d')!;
+  cctx.putImageData(
+    new ImageData(state.workData as Uint8ClampedArray<ArrayBuffer>, state.imgW, state.imgH),
+    0, 0,
+  );
+  for (const m of state.materials) {
+    const tmp = document.createElement('canvas');
+    tmp.width = m.w;
+    tmp.height = m.h;
+    tmp.getContext('2d')!.putImageData(
+      new ImageData(m.data as Uint8ClampedArray<ArrayBuffer>, m.w, m.h),
+      0, 0,
+    );
+    cctx.drawImage(tmp, m.x, m.y);
+  }
+  return cctx.getImageData(0, 0, state.imgW, state.imgH).data;
+}
+
+function loadMaterialFromFile(file: File): void {
+  if (!state.workData) {
+    showError(t('error.notLoaded'));
+    return;
+  }
+  if (!file || !file.type.startsWith('image/')) {
+    showError(t('error.imageType'));
+    return;
+  }
+  const img = new Image();
+  img.onload = () => {
+    let w = img.width, h = img.height;
+    // Shrink huge materials so they don't blow past the canvas. We aim
+    // for "fits within ~60% of the canvas" so the user can still see
+    // where to drop it.
+    const scale = Math.min(1, (state.imgW * 0.6) / w, (state.imgH * 0.6) / h);
+    if (scale < 1) {
+      w = Math.max(1, Math.round(w * scale));
+      h = Math.max(1, Math.round(h * scale));
+    }
+    const tmp = document.createElement('canvas');
+    tmp.width = w; tmp.height = h;
+    const tctx = tmp.getContext('2d')!;
+    if (scale < 1) {
+      tctx.imageSmoothingEnabled = true;
+      tctx.imageSmoothingQuality = 'high';
+    }
+    tctx.drawImage(img, 0, 0, w, h);
+    const id = tctx.getImageData(0, 0, w, h);
+
+    const m: MaterialLayer = {
+      id: nextMaterialId(),
+      name: (file.name || '素材').replace(/\.[^.]+$/, '') || '素材',
+      data: new Uint8ClampedArray(id.data),
+      origData: new Uint8ClampedArray(id.data),
+      w, h,
+      x: Math.max(0, Math.round((state.imgW - w) / 2)),
+      y: Math.max(0, Math.round((state.imgH - h) / 2)),
+      undo: [],
+      redo: [],
+    };
+    state.materials.push(m);
+    state.activeMaterialId = m.id;
+    renderLayerPanel();
+    redraw();
+    updateStatus();
+    scheduleAutosave();
+    URL.revokeObjectURL(img.src);
+  };
+  img.onerror = () => showError(t('error.loadFailed'));
+  img.src = URL.createObjectURL(file);
+}
+
+function removeMaterial(id: string): void {
+  const idx = state.materials.findIndex(m => m.id === id);
+  if (idx < 0) return;
+  state.materials.splice(idx, 1);
+  invalidateMaterialCache(id);
+  if (state.activeMaterialId === id) {
+    state.activeMaterialId = null;
+    // The move tool is only meaningful with an active material — bail
+    // back to erase so the user has a usable tool selected.
+    if (state.tool === 'move') setTool('erase');
+    else refreshToolButtonsActive();
+  }
+  renderLayerPanel();
+  redraw();
+  updateStatus();
+  scheduleAutosave();
+}
+
+function setActiveLayer(id: string | null): void {
+  if (state.activeMaterialId === id) return;
+  // Switching layers mid-stroke / mid-mode would leave stale state.
+  if (state.isDrawing || state.isMovingMaterial) return;
+  if (id !== null) {
+    // Switching to a material clears any rect selection (it's in base
+    // coords and would mis-clip material wand operations).
+    clearRectSelection();
+    // Material editing supports brush/wand/move. If the user was on
+    // rect-select, fall back to erase as a sensible default.
+    if (state.tool === 'rectSelect') setTool('erase');
+  } else {
+    // Leaving material → base: move tool isn't meaningful on base, fall back.
+    if (state.tool === 'move') setTool('erase');
+  }
+  state.activeMaterialId = id;
+  drawMaterialOverlay();
+  refreshToolButtonsActive();
+  renderLayerPanel();
+  updateStatus();
+}
+
+function renderLayerPanel(): void {
+  const panel = $('layer-panel');
+  const list = $('layer-list');
+  if (!panel || !list) return;
+  // Only show the panel once a base image is loaded; until then the
+  // editor is empty and the panel would be visual noise.
+  if (!state.workData) {
+    panel.classList.remove('show');
+    list.innerHTML = '';
+    return;
+  }
+  panel.classList.add('show');
+  list.innerHTML = '';
+
+  type Row = { id: string | null; name: string };
+  // Top of the list = topmost in the composite. Materials render over
+  // base, so materials come first and base is at the bottom.
+  const rows: Row[] = [];
+  for (let i = state.materials.length - 1; i >= 0; i--) {
+    rows.push({ id: state.materials[i].id, name: state.materials[i].name });
+  }
+  rows.push({ id: null, name: t('layers.base') });
+
+  for (const r of rows) {
+    const li = document.createElement('li');
+    if (state.activeMaterialId === r.id) li.classList.add('active');
+    const name = document.createElement('span');
+    name.className = 'layer-name';
+    name.textContent = r.name;
+    li.appendChild(name);
+    if (r.id !== null) {
+      const del = document.createElement('button');
+      del.className = 'layer-del';
+      del.title = t('layers.delete');
+      del.innerHTML = '<svg><use href="#i-x"/></svg>';
+      del.onclick = e => {
+        e.stopPropagation();
+        removeMaterial(r.id!);
+      };
+      li.appendChild(del);
+    }
+    li.onclick = () => setActiveLayer(r.id);
+    list.appendChild(li);
+  }
+}
+
+// ============================================================================
 // Tool selection
 // ============================================================================
 // Tool-hint keys; the actual translated string is fetched at render
@@ -1070,6 +1305,7 @@ const TOOL_HINT_KEY = {
   wand:        'hint.wand',
   restoreWand: 'hint.restoreWand',
   rectSelect:  'hint.rect',
+  move:        'hint.move',
 };
 
 function setTool(name) {
@@ -1093,9 +1329,9 @@ function setTool(name) {
   // Restore the size remembered for the incoming brush.
   if (name === 'erase')   state.brushSize = state.eraseSize;
   if (name === 'restore') state.brushSize = state.restoreSize;
-  // Brush size is meaningless for wand and rect-select (both operate on
-  // whole regions), so dim the slider and show "—".
-  const sizeIrrelevant = name === 'wand' || name === 'restoreWand' || name === 'rectSelect';
+  // Brush size is meaningless for wand, rect-select, and move, so dim
+  // the slider and show "—".
+  const sizeIrrelevant = name === 'wand' || name === 'restoreWand' || name === 'rectSelect' || name === 'move';
   const sizeSlider = $<HTMLInputElement>('size-slider');
   const sizeDisplay = $('size-display');
   if (sizeSlider) {
@@ -1116,6 +1352,8 @@ function setTool(name) {
   // Wand tools have no brush ring, so without this the workspace's
   // `cursor: none` would leave the user without any visible pointer.
   workspace.classList.toggle('wand-mode', name === 'wand' || name === 'restoreWand');
+  // Move tool: standard "move" cursor.
+  workspace.classList.toggle('move-mode', name === 'move');
   // Show the rect controls when a wand or rect-select is active and a
   // rectangle is currently set (or being created).
   updateRectControlsVisibility();
@@ -1131,13 +1369,22 @@ function setTool(name) {
 // switching the active tool.
 function refreshToolButtonsActive() {
   const hasRect = !!state.rectSelection;
+  const hasMaterial = !!getActiveMaterial();
   // Rect-select button is meaningful while a wand is in play, while
   // rect-select itself is active, or while a rect already exists.
+  // Hide it while a material is active (rect lives in base coords).
   const rectBtn = document.querySelector('.tool-btn[data-tool="rectSelect"]');
   if (rectBtn) {
-    const showRect = state.tool === 'wand' || state.tool === 'restoreWand'
-                  || state.tool === 'rectSelect' || hasRect;
+    const showRect = !hasMaterial && (
+      state.tool === 'wand' || state.tool === 'restoreWand'
+      || state.tool === 'rectSelect' || hasRect
+    );
     rectBtn.style.display = showRect ? '' : 'none';
+  }
+  // Move tool is only meaningful when a material is active.
+  const moveBtn = document.querySelector('.tool-btn[data-tool="move"]');
+  if (moveBtn) {
+    moveBtn.style.display = hasMaterial ? '' : 'none';
   }
   document.querySelectorAll('.tool-btn').forEach(b => {
     let active = b.dataset.tool === state.tool;
@@ -1269,6 +1516,18 @@ function bindUI() {
     if (f) loadAIOutputFile(f);
     $('ai-file-input').value = '';
   };
+  const materialAddBtn = $('material-add-btn');
+  if (materialAddBtn) {
+    materialAddBtn.onclick = () => $('material-file-input').click();
+  }
+  const materialFileInput = $('material-file-input');
+  if (materialFileInput) {
+    materialFileInput.onchange = () => {
+      const f = materialFileInput.files[0];
+      if (f) loadMaterialFromFile(f);
+      materialFileInput.value = '';
+    };
+  }
   $('show-orig-btn').onclick = () => {
     if (!state.origData) return;
     toggleOriginalOverlay(state.origData, state.imgW, state.imgH);
@@ -1395,6 +1654,17 @@ async function autosaveNow() {
     origData: state.origData.buffer.slice(0),
     workData: state.workData.buffer.slice(0),
     savedAt: Date.now(),
+    materials: state.materials.map(m => ({
+      id: m.id,
+      name: m.name,
+      data: m.data.buffer.slice(0),
+      origData: m.origData.buffer.slice(0),
+      w: m.w,
+      h: m.h,
+      x: m.x,
+      y: m.y,
+    })),
+    activeMaterialId: state.activeMaterialId,
   });
 }
 
@@ -1441,11 +1711,28 @@ async function tryRestoreAutosave() {
   state.origData = new Uint8ClampedArray(session.origData);
   state.workData = new Uint8ClampedArray(session.workData);
   state.undo = []; state.redo = [];
+  // Restore materials (v2+ sessions). v1 sessions lack the field and
+  // come back with no materials, which is exactly the right behavior.
+  state.materials = (session.materials || []).map(m => ({
+    id: m.id,
+    name: m.name,
+    data: new Uint8ClampedArray(m.data),
+    origData: new Uint8ClampedArray(m.origData),
+    w: m.w,
+    h: m.h,
+    x: m.x,
+    y: m.y,
+    undo: [],
+    redo: [],
+  }));
+  state.activeMaterialId = session.activeMaterialId ?? null;
+  invalidateMaterialCache();
   canvas.width = state.imgW;
   canvas.height = state.imgH;
   emptyHint.style.display = 'none';
   $('filename-status').textContent = state.filename;
   setTool('erase');
+  renderLayerPanel();
   fitToScreen();
   redraw();
   updateStatus();

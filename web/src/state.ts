@@ -7,9 +7,26 @@
 // many fields are still untyped) so the migration from a single-file
 // JS app stays incremental. Tighten as modules get their own types.
 
-export type Tool = 'erase' | 'restore' | 'wand' | 'restoreWand' | 'rectSelect';
+export type Tool = 'erase' | 'restore' | 'wand' | 'restoreWand' | 'rectSelect' | 'move';
 export type WandTool = 'wand' | 'restoreWand';
 export type SaveFormat = 'png' | 'webp' | 'jpeg';
+
+// A "material" image overlaid on top of the base image. Position is in
+// base-canvas coordinates. Each layer keeps its own pixel buffer and
+// its own undo/redo so the user can erase/restore on the material
+// without affecting the base (and vice versa).
+export interface MaterialLayer {
+  id: string;
+  name: string;
+  data: Uint8ClampedArray;       // RGBA at intrinsic size
+  origData: Uint8ClampedArray;   // RGBA, unmodified — used by restore brush/wand
+  w: number;
+  h: number;
+  x: number;                     // top-left in base-canvas coords
+  y: number;
+  undo: Uint8ClampedArray[];
+  redo: Uint8ClampedArray[];
+}
 
 export interface RectSelection {
   minX: number;
@@ -78,6 +95,15 @@ export interface AppState {
   autoCleanupThreshold: number;             // px² for one-shot auto-cleanup
   saveFormat: SaveFormat;
   autoSaveEnabled: boolean;
+
+  // Multi-layer support. base レイヤーは workData / origData / imgW / imgH
+  // にそのまま乗っており、materials がその上に上書きされる。activeMaterialId
+  // が null のとき編集対象は base、それ以外は materials のいずれか。
+  materials: MaterialLayer[];
+  activeMaterialId: string | null;
+  isMovingMaterial: boolean;
+  moveStartScreen: { x: number; y: number } | null;
+  moveStartLayer: { x: number; y: number } | null;
 }
 
 export const state: AppState = {
@@ -122,6 +148,11 @@ export const state: AppState = {
   autoCleanupThreshold: 16,
   saveFormat: 'png',
   autoSaveEnabled: true,
+  materials: [],
+  activeMaterialId: null,
+  isMovingMaterial: false,
+  moveStartScreen: null,
+  moveStartLayer: null,
 };
 
 // Reflect the persisted autosave preference into the runtime state.

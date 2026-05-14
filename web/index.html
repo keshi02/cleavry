@@ -75,6 +75,10 @@
   <symbol id="i-clipboard-paste" viewBox="0 0 24 24"><path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1Z"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/></symbol>
   <symbol id="i-trash-2" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></symbol>
   <symbol id="i-package" viewBox="0 0 24 24"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7.04 12 12 20.71 7.04"/><line x1="12" x2="12" y1="22" y2="12"/></symbol>
+  <symbol id="i-image-plus" viewBox="0 0 24 24"><path d="M16 5h6"/><path d="M19 2v6"/><path d="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol>
+  <symbol id="i-move" viewBox="0 0 24 24"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="22"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
 </svg>
 
 <div id="app">
@@ -90,6 +94,8 @@
       <button id="ai-bg-btn" class="icon-btn-text" data-i18n-aria="btn.aiBg" data-i18n-tip="tip.aiBg" disabled><svg><use href="#i-sparkles"/></svg> <span data-i18n="btn.aiBg">AI 背景除去</span></button>
       <button id="ai-input-btn" class="icon-btn-text" data-i18n-aria="btn.aiInput" data-i18n-tip="tip.aiInput" disabled><svg><use href="#i-file-down"/></svg> <span data-i18n="btn.aiInput">AI出力読込</span></button>
       <input type="file" id="ai-file-input" accept="image/png,image/jpeg" hidden>
+      <button id="material-add-btn" class="icon-btn-text" data-i18n-aria="btn.addMaterial" data-i18n-tip="tip.addMaterial" disabled><svg><use href="#i-image-plus"/></svg> <span data-i18n="btn.addMaterial">素材追加</span></button>
+      <input type="file" id="material-file-input" accept="image/png,image/jpeg,image/webp" hidden>
       <button id="save-btn" class="icon-btn-text" data-i18n-aria="btn.save" data-i18n-tip="tip.save" disabled><svg><use href="#i-download"/></svg> <span data-i18n="btn.save">保存</span></button>
       <select id="save-format" data-i18n-tip="tip.saveFormat" disabled>
         <option value="png" selected>PNG</option>
@@ -127,6 +133,7 @@
         <button data-tool="wand"        class="tool-btn icon-btn-text"        data-i18n-aria="tool.wand" data-i18n-tip="tip.toolWand"><svg><use href="#i-wand-sparkles"/></svg> <span data-i18n="tool.wand">ワンド</span></button>
         <button data-tool="restoreWand" class="tool-btn icon-btn-text"        data-i18n-aria="tool.restoreWand" data-i18n-tip="tip.toolRestoreWand"><svg><use href="#i-rewind"/></svg> <span data-i18n="tool.restoreWand">復元ワンド</span></button>
         <button data-tool="rectSelect"  class="tool-btn icon-btn-text"        data-i18n-aria="tool.rect" data-i18n-tip="tip.toolRect"><svg><use href="#i-square-dashed"/></svg> <span data-i18n="tool.rect">範囲</span></button>
+        <button data-tool="move"        class="tool-btn icon-btn-text"        data-i18n-aria="tool.move" data-i18n-tip="tip.toolMove"><svg><use href="#i-move"/></svg> <span data-i18n="tool.move">移動</span></button>
       </div>
       <div id="rect-controls" data-i18n-tip="tip.rectControls">
         <label><input type="radio" name="rect-mode" value="inside" checked> <span data-i18n="label.rectInside">内側</span></label>
@@ -178,8 +185,13 @@
       <canvas id="canvas"></canvas>
       <canvas id="component-overlay"></canvas>
       <canvas id="rect-overlay"></canvas>
+      <canvas id="material-overlay"></canvas>
     </div>
     <div id="cursor-overlay"></div>
+    <div id="layer-panel" aria-label="レイヤー">
+      <div class="layer-panel-title"><svg class="lucide-inline"><use href="#i-layers"/></svg> <span data-i18n="layers.title">レイヤー</span></div>
+      <ul id="layer-list"></ul>
+    </div>
     <div id="toast"></div>
     <div id="separate-bar">
       <span class="info"><b id="separate-count">0</b> / <span id="separate-total">0</span> 個選択中</span>

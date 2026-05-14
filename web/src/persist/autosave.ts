@@ -9,6 +9,22 @@
 const DB_NAME = 'eraser-autosave';
 const STORE = 'sessions';
 const KEY = 'current';
+// Bumped from 1 to 2 when materials were added. The store schema is the
+// same (a single key/value store), so onupgradeneeded just needs to
+// create the store if missing — old session blobs without materials
+// still load fine.
+const DB_VERSION = 2;
+
+export interface AutosaveMaterial {
+  id: string;
+  name: string;
+  data: ArrayBuffer;
+  origData: ArrayBuffer;
+  w: number;
+  h: number;
+  x: number;
+  y: number;
+}
 
 export interface AutosaveSession {
   filename: string;
@@ -17,13 +33,18 @@ export interface AutosaveSession {
   origData: ArrayBuffer;
   workData: ArrayBuffer;
   savedAt: number;
+  // Optional so v1 sessions without this field still type-check on load.
+  materials?: AutosaveMaterial[];
+  activeMaterialId?: string | null;
 }
 
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
-      req.result.createObjectStore(STORE);
+      if (!req.result.objectStoreNames.contains(STORE)) {
+        req.result.createObjectStore(STORE);
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror   = () => reject(req.error);
