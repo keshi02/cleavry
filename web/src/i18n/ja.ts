@@ -56,7 +56,7 @@ export default {
   'tip.toolWand': 'マジックワンド (W)',
   'tip.toolRestoreWand': '復元ワンド (Shift+W) — 元画像の連続同色を一括復元',
   'tip.toolRect': '矩形範囲を指定してワンドの対象を制限',
-  'tip.toolMove': 'ドラッグで素材を移動（素材を選択中のみ）',
+  'tip.toolMove': '素材をドラッグで移動／四隅・四辺のハンドルで拡大縮小\nコーナーは縦横比固定、Shift で解除',
   'tip.addMaterial': '画像を素材として追加。元画像の上に重ねて移動・透過・復元できます',
   'tip.rectControls': 'ワンドの適用範囲。矩形を引いた状態で「内側のみ」「外側のみ」を切替',
   'tip.undo': 'Undo (Cmd+Z)',
@@ -92,7 +92,7 @@ export default {
   'hint.wand': 'クリックで連続同色を一括透明化 / 色許容度で範囲調整',
   'hint.restoreWand': 'クリックで元画像から連続同色を復元',
   'hint.rect': 'ドラッグで矩形範囲を作成 / ESC でクリア',
-  'hint.move': 'ドラッグで素材を移動 / 別レイヤーは右上パネルで切替',
+  'hint.move': 'ドラッグで移動 / ハンドルで拡縮（Shift で縦横比解除）',
 
   // Layer panel
   'layers.title': 'レイヤー',

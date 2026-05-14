@@ -66,8 +66,20 @@ export function redraw(): void {
   );
   // Composite each material on top of the base. drawImage honours the
   // material's alpha so transparent pixels show the base through.
+  // While a resize is in flight, scale the *active* material to the
+  // preview bbox via drawImage's stretch form — the underlying pixel
+  // buffer isn't rebuilt until pointerup, so quality is preserved.
   for (const m of state.materials) {
-    ctx.drawImage(getMaterialCanvas(m), m.x, m.y);
+    const previewing = state.resizePreview
+      && state.activeMaterialId === m.id;
+    if (previewing) {
+      const p = state.resizePreview!;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(getMaterialCanvas(m), p.x, p.y, p.w, p.h);
+    } else {
+      ctx.drawImage(getMaterialCanvas(m), m.x, m.y);
+    }
   }
   // applyTransform repaints the material outline (and any other overlay
   // that lives inside #canvas-wrap), so there's no separate call here.
@@ -86,7 +98,9 @@ export function applyTransform(): void {
 
 // Dashed outline around the currently-selected material so the user
 // knows which layer their brush / wand will edit and what they're
-// about to drag with the move tool.
+// about to drag with the move tool. While the move tool is active we
+// also draw 8 small handles (4 corners + 4 edge midpoints) so the user
+// can grab them to resize.
 export function drawMaterialOverlay(): void {
   if (!state.imgW) {
     materialOverlay.classList.remove('show');
@@ -103,6 +117,14 @@ export function drawMaterialOverlay(): void {
   materialOverlay.height = state.imgH;
   materialOverlay.classList.add('show');
 
+  // The outline traces the preview bbox while a resize is in flight,
+  // so the user sees the target dimensions even before the rebuild.
+  const p = state.resizePreview;
+  const bx = p ? p.x : active.x;
+  const by = p ? p.y : active.y;
+  const bw = p ? p.w : active.w;
+  const bh = p ? p.h : active.h;
+
   const c = materialOverlayCtx;
   c.clearRect(0, 0, state.imgW, state.imgH);
   const lineW = Math.max(0.5, 2 / state.zoom);
@@ -112,12 +134,33 @@ export function drawMaterialOverlay(): void {
   c.strokeStyle = '#ffce4d';
   c.setLineDash([dash, gap]);
   c.strokeRect(
-    active.x + lineW / 2,
-    active.y + lineW / 2,
-    Math.max(0, active.w - lineW),
-    Math.max(0, active.h - lineW),
+    bx + lineW / 2,
+    by + lineW / 2,
+    Math.max(0, bw - lineW),
+    Math.max(0, bh - lineW),
   );
   c.setLineDash([]);
+
+  // Handles — drawn only when the move tool is active so the dashed
+  // outline doesn't look interactive in tools that ignore handles.
+  if (state.tool !== 'move') return;
+  const hSize = Math.max(4, 9 / state.zoom);
+  const half = hSize / 2;
+  const hx = [bx, bx + bw / 2, bx + bw];
+  const hy = [by, by + bh / 2, by + bh];
+  c.lineWidth = Math.max(0.5, 1.5 / state.zoom);
+  c.strokeStyle = '#000';
+  c.fillStyle = '#ffce4d';
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      // Skip the centre — only edges and corners are draggable.
+      if (i === 1 && j === 1) continue;
+      const cx = hx[i] - half;
+      const cy = hy[j] - half;
+      c.fillRect(cx, cy, hSize, hSize);
+      c.strokeRect(cx, cy, hSize, hSize);
+    }
+  }
 }
 
 export function drawRectOverlay(): void {

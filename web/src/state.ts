@@ -104,7 +104,20 @@ export interface AppState {
   isMovingMaterial: boolean;
   moveStartScreen: { x: number; y: number } | null;
   moveStartLayer: { x: number; y: number } | null;
+  // Resize-in-progress state. resizeHandle names which corner / edge the
+  // user grabbed, resizeStart captures the material's original geometry +
+  // the pointer's image-space anchor, resizePreview is the live target
+  // bbox used by the renderer (the actual pixel rebuild only happens on
+  // pointerup so we don't degrade quality re-sampling every frame).
+  resizeHandle: ResizeHandle | null;
+  resizeStart: {
+    x: number; y: number; w: number; h: number;
+    pointerX: number; pointerY: number;
+  } | null;
+  resizePreview: { x: number; y: number; w: number; h: number } | null;
 }
+
+export type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
 export const state: AppState = {
   origData: null,
@@ -153,6 +166,9 @@ export const state: AppState = {
   isMovingMaterial: false,
   moveStartScreen: null,
   moveStartLayer: null,
+  resizeHandle: null,
+  resizeStart: null,
+  resizePreview: null,
 };
 
 // Reflect the persisted autosave preference into the runtime state.

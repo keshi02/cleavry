@@ -56,7 +56,7 @@ export default {
   'tip.toolWand': 'Magic wand (W)',
   'tip.toolRestoreWand': 'Restore wand (Shift+W) — flood-fill restore from the original image',
   'tip.toolRect': 'Rect-select to constrain the wand',
-  'tip.toolMove': 'Drag to move the active material (material layers only)',
+  'tip.toolMove': 'Drag the material to move / drag a handle to resize\nCorners keep the aspect ratio (Shift to free)',
   'tip.addMaterial': 'Add an image as a material layer. Move, erase, and restore it on top of the base image',
   'tip.rectControls': 'Wand-scope rectangle. Switch between "inside only" and "outside only"',
   'tip.undo': 'Undo (Cmd+Z)',
@@ -92,7 +92,7 @@ export default {
   'hint.wand': 'Click to flood-fill by color / use Tolerance to widen',
   'hint.restoreWand': 'Click to flood-fill restore from the original image',
   'hint.rect': 'Drag to draw rect / ESC to clear',
-  'hint.move': 'Drag to move the material / switch layers from the panel',
+  'hint.move': 'Drag to move / use handles to resize (Shift = free aspect)',
 
   // Layer panel
   'layers.title': 'Layers',

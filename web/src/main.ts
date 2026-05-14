@@ -39,7 +39,7 @@ import {
   invalidateMaterialCache,
 } from './canvas/render';
 import { getActiveMaterial, getActiveLayer, nextMaterialId } from './layers/active';
-import { MaterialLayer } from './state';
+import { MaterialLayer, ResizeHandle } from './state';
 
 // ── External globals ─────────────────────────────────────────────────────
 // JSZip is loaded via a <script> tag in index.html. transformers.js is
@@ -357,19 +357,26 @@ function onPointerDown(e) {
     return;
   }
 
-  // Move tool: drag the active material around the canvas. The drag is
-  // tracked in screen pixels (and converted back to image-space via the
-  // current zoom) so the material follows the pointer 1:1 regardless of
-  // how zoomed-in the view is.
+  // Move tool: drag the active material around the canvas, or grab a
+  // handle to resize. The handle hit-test wins over plain move so the
+  // user can grab a corner that's still inside the material bbox.
   if (state.tool === 'move') {
     const mat = getActiveMaterial();
     if (!mat) return;
+    const handle = hitTestResizeHandle(x, y, mat);
+    if (handle) {
+      state.resizeHandle = handle;
+      state.resizeStart = {
+        x: mat.x, y: mat.y, w: mat.w, h: mat.h,
+        pointerX: x, pointerY: y,
+      };
+      state.resizePreview = { x: mat.x, y: mat.y, w: mat.w, h: mat.h };
+      e.preventDefault();
+      return;
+    }
     state.isMovingMaterial = true;
     state.moveStartScreen = { x: e.clientX, y: e.clientY };
     state.moveStartLayer = { x: mat.x, y: mat.y };
-    // Take an undo snapshot of (x, y) — re-using the data snapshot is
-    // overkill for a pure-move. We push *no* data snapshot here; for now
-    // moves aren't included in undo. (Material edits still are.)
     e.preventDefault();
     return;
   }
@@ -426,6 +433,19 @@ function onPointerMove(e) {
     state.panX = state.panStartPos.x + dx;
     state.panY = state.panStartPos.y + dy;
     applyTransform();
+    return;
+  }
+
+  // Resize in flight: update the live preview bbox. Aspect-lock on
+  // corners is the default; Shift toggles to free-form (and re-locks
+  // edges, which is a no-op since they're always single-axis).
+  if (state.resizeHandle && state.resizeStart) {
+    const { x: cx, y: cy } = screenToImage(e.clientX, e.clientY);
+    const lockAspect = !e.shiftKey;  // default lock for corners
+    state.resizePreview = computeResizePreview(
+      state.resizeHandle, state.resizeStart, cx, cy, lockAspect,
+    );
+    redraw();
     return;
   }
 
@@ -519,6 +539,22 @@ function onPointerUp(e) {
   if (state.isPanning) {
     state.isPanning = false;
     workspace.classList.remove('panning');
+  }
+  if (state.resizeHandle) {
+    // Commit the preview: re-rasterize the material's data + origData
+    // at the new dimensions, then clear the resize state. The redraw
+    // afterwards goes through the non-preview path since
+    // state.resizePreview is back to null.
+    const mat = getActiveMaterial();
+    if (mat && state.resizePreview) {
+      rescaleMaterial(mat, state.resizePreview);
+    }
+    state.resizeHandle = null;
+    state.resizeStart = null;
+    state.resizePreview = null;
+    redraw();
+    updateStatus();
+    scheduleAutosave();
   }
   if (state.isMovingMaterial) {
     state.isMovingMaterial = false;
@@ -1153,6 +1189,135 @@ function compositeAllLayers(): Uint8ClampedArray | null {
     cctx.drawImage(tmp, m.x, m.y);
   }
   return cctx.getImageData(0, 0, state.imgW, state.imgH).data;
+}
+
+// Test whether (imgX, imgY) is close enough to one of the material's
+// 8 resize handles to count as a "grab". Tolerance is in image-space
+// pixels scaled by the inverse zoom so the hit area stays a constant
+// ~12 screen pixels across regardless of how zoomed-in the user is.
+function hitTestResizeHandle(imgX: number, imgY: number, m: MaterialLayer): ResizeHandle | null {
+  const tol = Math.max(6, 12 / state.zoom);
+  const handles: Record<ResizeHandle, [number, number]> = {
+    nw: [m.x,           m.y],
+    n:  [m.x + m.w / 2, m.y],
+    ne: [m.x + m.w,     m.y],
+    e:  [m.x + m.w,     m.y + m.h / 2],
+    se: [m.x + m.w,     m.y + m.h],
+    s:  [m.x + m.w / 2, m.y + m.h],
+    sw: [m.x,           m.y + m.h],
+    w:  [m.x,           m.y + m.h / 2],
+  };
+  for (const name in handles) {
+    const [hx, hy] = handles[name as ResizeHandle];
+    if (Math.abs(imgX - hx) < tol && Math.abs(imgY - hy) < tol) {
+      return name as ResizeHandle;
+    }
+  }
+  return null;
+}
+
+// Compute the target bbox for a handle drag. Corners default to
+// aspect-ratio lock; edges always free-resize one axis. Holding Shift
+// inverts the lock (free corner / lock edge — though edges have no
+// meaningful aspect to lock and just behave the same).
+function computeResizePreview(
+  handle: ResizeHandle,
+  start: { x: number; y: number; w: number; h: number; pointerX: number; pointerY: number },
+  curX: number,
+  curY: number,
+  lockAspect: boolean,
+): { x: number; y: number; w: number; h: number } {
+  const MIN = 8;
+  // Anchor-based math: each handle has an opposite corner / edge that
+  // stays pinned. We compute the live opposite of the dragged point
+  // (= the pointer), clamp the resulting size to ≥ MIN, then reproject
+  // back into x/y/w/h.
+  const right = start.x + start.w;
+  const bottom = start.y + start.h;
+  let nx = start.x, ny = start.y, nw = start.w, nh = start.h;
+
+  // Horizontal effect
+  if (handle === 'nw' || handle === 'w' || handle === 'sw') {
+    nx = Math.min(curX, right - MIN);
+    nw = right - nx;
+  } else if (handle === 'ne' || handle === 'e' || handle === 'se') {
+    nw = Math.max(MIN, curX - start.x);
+  } // n / s: width unchanged
+
+  // Vertical effect
+  if (handle === 'nw' || handle === 'n' || handle === 'ne') {
+    ny = Math.min(curY, bottom - MIN);
+    nh = bottom - ny;
+  } else if (handle === 'sw' || handle === 's' || handle === 'se') {
+    nh = Math.max(MIN, curY - start.y);
+  } // w / e: height unchanged
+
+  // Corner aspect lock — keep the same w/h ratio as the source.
+  const isCorner = handle === 'nw' || handle === 'ne' || handle === 'sw' || handle === 'se';
+  if (isCorner && lockAspect) {
+    const ratio = start.w / start.h;
+    // Drive the bigger relative change so the cursor stays close to the
+    // dragged corner.
+    if (nw / start.w > nh / start.h) {
+      nh = nw / ratio;
+    } else {
+      nw = nh * ratio;
+    }
+    nh = Math.max(MIN, nh);
+    nw = Math.max(MIN, nw);
+    // Re-anchor the bbox so the *opposite* corner stays put.
+    if (handle === 'nw') { nx = right  - nw; ny = bottom - nh; }
+    if (handle === 'ne') { nx = start.x;     ny = bottom - nh; }
+    if (handle === 'sw') { nx = right  - nw; ny = start.y; }
+    if (handle === 'se') { nx = start.x;     ny = start.y; }
+  }
+  return { x: Math.round(nx), y: Math.round(ny), w: Math.round(nw), h: Math.round(nh) };
+}
+
+// Rebuild a material's data + origData at the preview dimensions via a
+// canvas drawImage stretch. Quality stays high on a single resize;
+// repeated rounds re-sample from the current (already-scaled) buffer
+// rather than a pristine source, so multiple resizes will gradually
+// lose detail — same model as Photoshop "free transform" on a
+// rasterised layer.
+function rescaleMaterial(m: MaterialLayer, target: { x: number; y: number; w: number; h: number }): void {
+  if (target.w === m.w && target.h === m.h && target.x === m.x && target.y === m.y) return;
+  const src = document.createElement('canvas');
+  src.width = m.w; src.height = m.h;
+  src.getContext('2d')!.putImageData(
+    new ImageData(m.data as Uint8ClampedArray<ArrayBuffer>, m.w, m.h),
+    0, 0,
+  );
+  const srcOrig = document.createElement('canvas');
+  srcOrig.width = m.w; srcOrig.height = m.h;
+  srcOrig.getContext('2d')!.putImageData(
+    new ImageData(m.origData as Uint8ClampedArray<ArrayBuffer>, m.w, m.h),
+    0, 0,
+  );
+
+  const t = document.createElement('canvas');
+  t.width = target.w; t.height = target.h;
+  const tctx = t.getContext('2d')!;
+  tctx.imageSmoothingEnabled = true;
+  tctx.imageSmoothingQuality = 'high';
+  tctx.drawImage(src, 0, 0, target.w, target.h);
+  const newData = new Uint8ClampedArray(tctx.getImageData(0, 0, target.w, target.h).data);
+  tctx.clearRect(0, 0, target.w, target.h);
+  tctx.drawImage(srcOrig, 0, 0, target.w, target.h);
+  const newOrigData = new Uint8ClampedArray(tctx.getImageData(0, 0, target.w, target.h).data);
+
+  m.data = newData;
+  m.origData = newOrigData;
+  m.w = target.w;
+  m.h = target.h;
+  m.x = target.x;
+  m.y = target.y;
+  // Pixel-level undo entries are at the old dimensions and can't be
+  // applied back to a different-sized buffer; clear them so the user
+  // doesn't get a size mismatch the next time they hit Cmd+Z.
+  m.undo = [];
+  m.redo = [];
+  invalidateMaterialCache(m.id);
 }
 
 function loadMaterialFromFile(file: File): void {
