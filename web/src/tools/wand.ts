@@ -197,7 +197,12 @@ export function magicWandAt(ix: number, iy: number, cb: WandCallbacks): void {
       // snapshot the post-wand state). scheduleAutosave fires manually
       // since we bypassed pushUndo's normal autosave hook.
       if (activeMaterial) {
-        activeMaterial.undo.push(snapshot);
+        const snap = {
+          data: snapshot,
+          x: activeMaterial.x, y: activeMaterial.y,
+          w: activeMaterial.w, h: activeMaterial.h,
+        };
+        activeMaterial.undo.push(snap);
         if (activeMaterial.undo.length > state.maxUndo) activeMaterial.undo.shift();
         activeMaterial.redo = [];
       } else {

@@ -29,7 +29,7 @@ import { t, applyI18n, setLang } from './i18n';
 // Run `cleavry.setLang('en')` in the browser Console to override the
 // auto-detected language. There is no user-facing UI for this.
 (window as any).cleavry = { setLang };
-import { initHistory, pushUndo, undo, redoFn } from './persist/history';
+import { initHistory, pushUndo, pushMoveUndo, pushResizeUndo, undo, redoFn } from './persist/history';
 import {
   canvas, ctx, canvasWrap, workspace, cursor, rectOverlay,
   setRenderHooks,
@@ -545,26 +545,35 @@ function onPointerUp(e) {
     workspace.classList.remove('panning');
   }
   if (state.resizeHandle) {
-    // Commit the preview: re-rasterize the material's data + origData
-    // at the new dimensions, then clear the resize state. The redraw
-    // afterwards goes through the non-preview path since
-    // state.resizePreview is back to null.
+    // Commit the preview: snapshot the pre-resize material into undo,
+    // then re-rasterize at the new dimensions. The rescale only fires
+    // if anything actually changed.
     const mat = getActiveMaterial();
     if (mat && state.resizePreview) {
-      rescaleMaterial(mat, state.resizePreview);
+      const p = state.resizePreview;
+      const changed = mat.x !== p.x || mat.y !== p.y
+        || mat.w !== p.w || mat.h !== p.h;
+      if (changed) {
+        pushResizeUndo();
+        rescaleMaterial(mat, p);
+      }
     }
     state.resizeHandle = null;
     state.resizeStart = null;
     state.resizePreview = null;
     redraw();
     updateStatus();
-    scheduleAutosave();
   }
   if (state.isMovingMaterial) {
+    // Push the move into undo only if the material actually moved.
+    const mat = getActiveMaterial();
+    const start = state.moveStartLayer;
+    if (mat && start && (mat.x !== start.x || mat.y !== start.y)) {
+      pushMoveUndo(start.x, start.y);
+    }
     state.isMovingMaterial = false;
     state.moveStartScreen = null;
     state.moveStartLayer = null;
-    scheduleAutosave();
   }
   if (state.isDrawing) {
     const wasBrushTool = state.tool === 'erase' || state.tool === 'restore';
@@ -1325,11 +1334,9 @@ function rescaleMaterial(m: MaterialLayer, target: { x: number; y: number; w: nu
   m.h = target.h;
   m.x = target.x;
   m.y = target.y;
-  // Pixel-level undo entries are at the old dimensions and can't be
-  // applied back to a different-sized buffer; clear them so the user
-  // doesn't get a size mismatch the next time they hit Cmd+Z.
-  m.undo = [];
-  m.redo = [];
+  // Don't clear m.undo / m.redo here: MaterialSnap entries already
+  // capture w/h alongside data, so older snapshots remain consistent
+  // with the buffer they reference and can still be applied.
   invalidateMaterialCache(m.id);
 }
 

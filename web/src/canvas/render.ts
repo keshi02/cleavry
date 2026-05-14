@@ -101,6 +101,11 @@ export function applyTransform(): void {
 // about to drag with the move tool. While the move tool is active we
 // also draw 8 small handles (4 corners + 4 edge midpoints) so the user
 // can grab them to resize.
+//
+// The overlay canvas is dynamically sized + repositioned each call so
+// it always covers the material bbox AND the handle outset — without
+// it, a material scaled larger than the base canvas would have its
+// outline clipped at the base edges.
 export function drawMaterialOverlay(): void {
   if (!state.imgW) {
     materialOverlay.classList.remove('show');
@@ -113,9 +118,6 @@ export function drawMaterialOverlay(): void {
     materialOverlay.classList.remove('show');
     return;
   }
-  materialOverlay.width = state.imgW;
-  materialOverlay.height = state.imgH;
-  materialOverlay.classList.add('show');
 
   // The outline traces the preview bbox while a resize is in flight,
   // so the user sees the target dimensions even before the rebuild.
@@ -125,8 +127,30 @@ export function drawMaterialOverlay(): void {
   const bw = p ? p.w : active.w;
   const bh = p ? p.h : active.h;
 
+  // Size the overlay canvas to fully cover the bbox plus a margin for
+  // the handles. Positioned within #canvas-wrap (which carries the
+  // zoom/pan transform), so we can extend it beyond the base canvas
+  // edges using negative top/left in image-space coordinates.
+  const hSize = Math.max(4, 9 / state.zoom);
+  const margin = Math.ceil(hSize + 2);
+  const minX = Math.floor(bx - margin);
+  const minY = Math.floor(by - margin);
+  const maxX = Math.ceil(bx + bw + margin);
+  const maxY = Math.ceil(by + bh + margin);
+  const ovW = Math.max(1, maxX - minX);
+  const ovH = Math.max(1, maxY - minY);
+  if (materialOverlay.width !== ovW)  materialOverlay.width  = ovW;
+  if (materialOverlay.height !== ovH) materialOverlay.height = ovH;
+  materialOverlay.style.left = minX + 'px';
+  materialOverlay.style.top  = minY + 'px';
+  materialOverlay.classList.add('show');
+
+  // Translate everything from base-canvas coords into overlay-local
+  // coords by subtracting the overlay's image-space origin.
+  const ox = -minX, oy = -minY;
+
   const c = materialOverlayCtx;
-  c.clearRect(0, 0, state.imgW, state.imgH);
+  c.clearRect(0, 0, ovW, ovH);
   const lineW = Math.max(0.5, 2 / state.zoom);
   const dash  = Math.max(2, 8 / state.zoom);
   const gap   = Math.max(1, 4 / state.zoom);
@@ -134,8 +158,8 @@ export function drawMaterialOverlay(): void {
   c.strokeStyle = '#ffce4d';
   c.setLineDash([dash, gap]);
   c.strokeRect(
-    bx + lineW / 2,
-    by + lineW / 2,
+    bx + ox + lineW / 2,
+    by + oy + lineW / 2,
     Math.max(0, bw - lineW),
     Math.max(0, bh - lineW),
   );
@@ -144,10 +168,9 @@ export function drawMaterialOverlay(): void {
   // Handles — drawn only when the move tool is active so the dashed
   // outline doesn't look interactive in tools that ignore handles.
   if (state.tool !== 'move') return;
-  const hSize = Math.max(4, 9 / state.zoom);
   const half = hSize / 2;
-  const hx = [bx, bx + bw / 2, bx + bw];
-  const hy = [by, by + bh / 2, by + bh];
+  const hx = [bx + ox, bx + ox + bw / 2, bx + ox + bw];
+  const hy = [by + oy, by + oy + bh / 2, by + oy + bh];
   c.lineWidth = Math.max(0.5, 1.5 / state.zoom);
   c.strokeStyle = '#000';
   c.fillStyle = '#ffce4d';

@@ -11,6 +11,19 @@ export type Tool = 'erase' | 'restore' | 'wand' | 'restoreWand' | 'rectSelect' |
 export type WandTool = 'wand' | 'restoreWand';
 export type SaveFormat = 'png' | 'webp' | 'jpeg';
 
+// One undoable change on a material layer. Position is always
+// captured (cheap) so moves and resizes can roundtrip. data /
+// origData are only included when the operation actually modified
+// pixels — keeps move-undo entries to a handful of numbers.
+export interface MaterialSnap {
+  data?: Uint8ClampedArray;
+  origData?: Uint8ClampedArray;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 // A "material" image overlaid on top of the base image. Position is in
 // base-canvas coordinates. Each layer keeps its own pixel buffer and
 // its own undo/redo so the user can erase/restore on the material
@@ -24,8 +37,8 @@ export interface MaterialLayer {
   h: number;
   x: number;                     // top-left in base-canvas coords
   y: number;
-  undo: Uint8ClampedArray[];
-  redo: Uint8ClampedArray[];
+  undo: MaterialSnap[];
+  redo: MaterialSnap[];
 }
 
 export interface RectSelection {

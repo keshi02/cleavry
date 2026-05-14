@@ -1,16 +1,19 @@
-// Undo / redo stacks (snapshot-based).
+// Undo / redo stacks.
 //
-// pushUndo() captures the *current* active-layer pixel buffer before a
-// mutation. undo() / redoFn() swap the active layer's data with the most
-// recent snapshot from the corresponding stack. Each material layer keeps
-// its own pair of stacks, plus state.undo/redo for the base. All stacks
-// are bounded by state.maxUndo.
+// Two stack shapes:
+//   - Base: `state.undo: Uint8ClampedArray[]` — raw pixel snapshots,
+//     since base position / size never change.
+//   - Material: `m.undo: MaterialSnap[]` — captures (x, y, w, h)
+//     always, plus optional pixel buffers when the operation actually
+//     mutated them. Lets us roundtrip moves, resizes, and pixel edits
+//     through the same stack.
 //
-// Side effects (redraw, exit-mode cleanup, autosave hook, status bar)
-// are injected via initHistory() so this module doesn't import the
-// rest of main.ts.
+// Helpers are exported so callers in main.ts can push specialised
+// snapshots (move-only, resize, full) when they know exactly what
+// changed. pushUndo() is the catch-all used by brush strokes and
+// other pixel-mutating ops.
 
-import { state } from '../state';
+import { state, MaterialLayer, MaterialSnap } from '../state';
 import { getActiveMaterial } from '../layers/active';
 import { invalidateMaterialCache } from '../canvas/render';
 
@@ -28,12 +31,21 @@ export function initHistory(h: HistoryHooks): void {
   hooks = h;
 }
 
+function bound(m: MaterialLayer, snap: MaterialSnap): void {
+  m.undo.push(snap);
+  if (m.undo.length > state.maxUndo) m.undo.shift();
+  m.redo = [];
+}
+
+// Catch-all push: snapshots data (pre-mutation) plus transform.
+// Brushes and wand-on-material use this.
 export function pushUndo(): void {
   const m = getActiveMaterial();
   if (m) {
-    m.undo.push(new Uint8ClampedArray(m.data));
-    if (m.undo.length > state.maxUndo) m.undo.shift();
-    m.redo = [];
+    bound(m, {
+      data: new Uint8ClampedArray(m.data),
+      x: m.x, y: m.y, w: m.w, h: m.h,
+    });
   } else {
     if (!state.workData) return;
     state.undo.push(new Uint8ClampedArray(state.workData));
@@ -44,6 +56,44 @@ export function pushUndo(): void {
   hooks?.scheduleAutosave();
 }
 
+// Transform-only snapshot — for moves where pixels don't change.
+// Caller passes the pre-move x/y; w/h come from the current material.
+export function pushMoveUndo(prevX: number, prevY: number): void {
+  const m = getActiveMaterial();
+  if (!m) return;
+  bound(m, { x: prevX, y: prevY, w: m.w, h: m.h });
+  hooks?.updateStatus();
+  hooks?.scheduleAutosave();
+}
+
+// Resize snapshot — pre-resize data + origData + transform. Caller is
+// expected to call this BEFORE rescaling.
+export function pushResizeUndo(): void {
+  const m = getActiveMaterial();
+  if (!m) return;
+  bound(m, {
+    data: new Uint8ClampedArray(m.data),
+    origData: new Uint8ClampedArray(m.origData),
+    x: m.x, y: m.y, w: m.w, h: m.h,
+  });
+  hooks?.updateStatus();
+  hooks?.scheduleAutosave();
+}
+
+function applyMaterialSnap(m: MaterialLayer, snap: MaterialSnap): MaterialSnap {
+  // Build the inverse for the redo stack: capture *current* values for
+  // whichever fields the incoming snap is going to touch.
+  const inverse: MaterialSnap = { x: m.x, y: m.y, w: m.w, h: m.h };
+  if (snap.data !== undefined) inverse.data = m.data;
+  if (snap.origData !== undefined) inverse.origData = m.origData;
+  // Now apply the snap.
+  m.x = snap.x; m.y = snap.y; m.w = snap.w; m.h = snap.h;
+  if (snap.data !== undefined) m.data = snap.data;
+  if (snap.origData !== undefined) m.origData = snap.origData;
+  invalidateMaterialCache(m.id);
+  return inverse;
+}
+
 export function undo(): void {
   const m = getActiveMaterial();
   if (m) {
@@ -51,14 +101,12 @@ export function undo(): void {
   } else {
     if (state.undo.length === 0 || !state.workData) return;
   }
-  // We only exit picking modes once we know an undo will actually fire,
-  // so an empty stack doesn't accidentally close them out.
   if (state.separateMode) hooks?.exitSeparateMode();
   if (state.cleanupMode)  hooks?.exitCleanupMode();
   if (m) {
-    m.redo.push(new Uint8ClampedArray(m.data));
-    m.data = m.undo.pop()!;
-    invalidateMaterialCache(m.id);
+    const snap = m.undo.pop()!;
+    const inverse = applyMaterialSnap(m, snap);
+    m.redo.push(inverse);
   } else {
     state.redo.push(new Uint8ClampedArray(state.workData!));
     state.workData = state.undo.pop()!;
@@ -78,9 +126,9 @@ export function redoFn(): void {
   if (state.separateMode) hooks?.exitSeparateMode();
   if (state.cleanupMode)  hooks?.exitCleanupMode();
   if (m) {
-    m.undo.push(new Uint8ClampedArray(m.data));
-    m.data = m.redo.pop()!;
-    invalidateMaterialCache(m.id);
+    const snap = m.redo.pop()!;
+    const inverse = applyMaterialSnap(m, snap);
+    m.undo.push(inverse);
   } else {
     state.undo.push(new Uint8ClampedArray(state.workData!));
     state.workData = state.redo.pop()!;
