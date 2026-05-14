@@ -89,7 +89,11 @@ function updateStatus() {
   $('save-format').disabled = !state.workData;
   $('separate-btn').disabled = !state.workData || !!activeMat;
   $('cleanup-btn').disabled = !state.workData || !!activeMat;
-  $('auto-cleanup-btn').disabled = !state.workData || !!activeMat;
+  // Auto-cleanup is alpha-wipe-by-component, which makes sense on a
+  // material layer too (e.g. trimming AI-segmented stray specks on a
+  // pasted-in cutout). The interactive cleanup mode still stays base-
+  // only since its overlay UI is built around base-canvas coords.
+  $('auto-cleanup-btn').disabled = !state.workData;
   $('ai-bg-btn').disabled = !state.workData || bgRemovalRunning || !!activeMat;
   $('ai-input-btn').disabled = !state.workData || !!activeMat;
   $('show-orig-btn').disabled = !state.workData;
@@ -955,7 +959,11 @@ function executeCleanup() {
 // one whose area ≤ threshold, done. Bound to "🪄 自動ノイズ除去".
 // ============================================================================
 async function runAutoCleanup() {
-  if (!state.workData) return;
+  // Auto-cleanup runs on whichever layer the user is editing — base or
+  // an active material. detectComponents works on a raw RGBA buffer and
+  // a size, so feeding it the active layer's local buffer is enough.
+  const layer = getActiveLayer();
+  if (!layer) return;
   if (state.separateMode || state.cleanupMode) return;
   if (isWandRunning()) return;
 
@@ -964,7 +972,7 @@ async function runAutoCleanup() {
 
   let result;
   try {
-    result = detectComponents(state.workData, state.imgW, state.imgH);
+    result = detectComponents(layer.data, layer.w, layer.h);
   } catch (err) {
     hideProgress();
     showError(t('error.processFailed'));
@@ -973,8 +981,7 @@ async function runAutoCleanup() {
   hideProgress();
 
   const threshold = state.autoCleanupThreshold;
-  const W = state.imgW, H = state.imgH;
-  const N = W * H;
+  const N = layer.w * layer.h;
   const mask = result.mask;
 
   const keep = new Set(
@@ -999,15 +1006,21 @@ async function runAutoCleanup() {
     return;
   }
 
-  // Snapshot first (pushUndo), THEN mutate workData. Order matters: the
-  // undo stack must capture pre-mutation state.
+  // Snapshot first (pushUndo, which targets the active layer), THEN
+  // mutate the active layer's buffer. Order matters: undo must capture
+  // pre-mutation state.
   pushUndo();
-  const data = state.workData;
+  const data = layer.data;
   for (let i = 0; i < N; i++) {
     const id = mask[i];
     if (id === 0) continue;
     if (keep.has(id)) continue;
     data[i * 4 + 3] = 0;
+  }
+  // The material's cached canvas was just invalidated by the alpha
+  // wipe — clear it so the next redraw picks up the new pixels.
+  if (layer.isMaterial && layer.materialId) {
+    invalidateMaterialCache(layer.materialId);
   }
   redraw();
   updateStatus();
