@@ -20,7 +20,14 @@
 //      swallow the synthesized click so the press doesn't also
 //      switch tools.
 
-const COLLAPSE_KEY = 'cleavry-mobile-tools-collapsed';
+// Bumped to v2 because the original key was set by users on a build
+// where the toggle wired up the body class but the bar didn't actually
+// move (a CSS :has() issue, fixed since). Those stale '1' values would
+// hide the bar on first load under the corrected CSS — surfacing as
+// "the bar isn't there on my phone". v2 starts everyone expanded; the
+// old key is cleaned up below.
+const COLLAPSE_KEY = 'cleavry-mobile-tools-collapsed-v2';
+const LEGACY_COLLAPSE_KEYS = ['cleavry-mobile-tools-collapsed'];
 const LONG_PRESS_MS = 500;
 const LONG_PRESS_MOVE_TOL = 10;
 const TIP_AUTODISMISS_MS = 2500;
@@ -68,6 +75,11 @@ function syncViewportOffset(): void {
 function setupCollapseToggle(): void {
   const toggle = document.getElementById('mobile-toolbar-toggle');
   if (!toggle) return;
+
+  // Clear any pre-v2 keys so old stale state can't keep the bar hidden.
+  try {
+    for (const k of LEGACY_COLLAPSE_KEYS) localStorage.removeItem(k);
+  } catch (_) { /* private mode */ }
 
   let initialCollapsed = false;
   try {
