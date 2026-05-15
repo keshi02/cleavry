@@ -103,21 +103,31 @@ function syncViewportOffset(): void {
   // iOS WebKit builds). Apply the bottom directly as inline style so
   // it can't be overridden by anything short of !important.
   const dock = document.querySelector<HTMLElement>('.mobile-tool-dock');
-  if (dock) dock.style.bottom = `${gap}px`;
+  const collapsed = document.body.classList.contains('mobile-tools-collapsed');
+  if (dock) {
+    dock.style.bottom = `${gap}px`;
+    // Compute the collapse transform here so it accounts for the
+    // chrome offset (`gap`) and the dock's actual rendered height.
+    // The CSS rule `translateY(calc(100% + safe + 12px))` only
+    // covered the dock's own height, leaving it `gap` pixels
+    // shy of fully hiding when the dock was lifted above iOS
+    // Safari's URL bar — which is exactly the case on phones.
+    if (collapsed) {
+      const dockH = dock.getBoundingClientRect().height;
+      dock.style.transform = `translateY(${dockH + gap + 16}px)`;
+    } else {
+      dock.style.transform = 'translateY(0)';
+    }
+  }
   const toggle = document.getElementById('mobile-toolbar-toggle');
   if (toggle) {
     const safe = getSafeAreaInsetBottomPx();
-    const collapsed = document.body.classList.contains('mobile-tools-collapsed');
     if (collapsed) {
-      // Anchored to the safe content area just above any browser
-      // chrome / home indicator.
+      // Sit just above whatever browser chrome / home indicator
+      // is at the viewport bottom.
       toggle.style.bottom = `${gap + safe}px`;
     } else {
       // Anchor the toggle's bottom edge to the dock's top edge.
-      // Measure the dock's actual rendered height so the chevron
-      // sits flush regardless of border, padding, or safe-area
-      // contributions — the previous fixed 64px constant was 3px
-      // short of the real height (forgot the 3px accent border).
       const dockH = dock ? dock.getBoundingClientRect().height : 64;
       toggle.style.bottom = `${gap + dockH}px`;
     }
