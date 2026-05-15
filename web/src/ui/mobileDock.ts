@@ -26,6 +26,7 @@ const LONG_PRESS_MOVE_TOL = 10;
 const TIP_AUTODISMISS_MS = 2500;
 
 export function initMobileDock(): void {
+  tagToolDock();
   syncViewportOffset();
   const vv = window.visualViewport;
   if (vv) {
@@ -37,6 +38,17 @@ export function initMobileDock(): void {
 
   setupCollapseToggle();
   setupLongPressTooltips();
+}
+
+// Tag the .group that wraps the .tool-btns container so the mobile
+// CSS can target it via a plain class rather than `:has(> .tool-btns)`.
+// Field reports indicate `:has()` styling occasionally fails to update
+// when a body-class state changes on certain iOS Safari builds; a
+// plain class selector is rock-solid.
+function tagToolDock(): void {
+  const toolBtns = document.querySelector<HTMLElement>('#toolbar .tool-btns');
+  const group = toolBtns?.parentElement;
+  if (group) group.classList.add('mobile-tool-dock');
 }
 
 function syncViewportOffset(): void {

@@ -982,7 +982,7 @@
        `--vv-bottom-offset` is updated from JS via the visualViewport API
        so the bar clears iOS Safari's bottom URL/tab bar. Falls back to 0
        on browsers / contexts without that API. */
-    .group:has(> .tool-btns) {
+    .mobile-tool-dock {
       position: fixed;
       left: 0;
       right: 0;
@@ -999,16 +999,16 @@
     }
     /* Collapsed: slide the bar fully below the visible area. Extra 12px
        so the box-shadow ghost doesn't peek. */
-    body.mobile-tools-collapsed .group:has(> .tool-btns) {
+    body.mobile-tools-collapsed .mobile-tool-dock {
       transform: translateY(calc(100% + env(safe-area-inset-bottom, 0px) + 12px));
     }
-    .group:has(> .tool-btns) .tool-btns {
+    .mobile-tool-dock .tool-btns {
       display: flex;
       flex: 1;
       justify-content: space-around;
       gap: 2px;
     }
-    .group:has(> .tool-btns) .tool-btn {
+    .mobile-tool-dock .tool-btn {
       flex: 1;
       flex-direction: column;
       gap: 2px;
@@ -1017,14 +1017,14 @@
       padding: 6px 2px;
       border-radius: 8px;
     }
-    .group:has(> .tool-btns) .tool-btn svg {
+    .mobile-tool-dock .tool-btn svg {
       width: 22px;
       height: 22px;
     }
     /* Override the generic mobile rule that hides icon-text labels —
        in the bottom bar the label sits under the icon and is the
        primary way users identify the tool. */
-    .group:has(> .tool-btns) .tool-btn > span[data-i18n] {
+    .mobile-tool-dock .tool-btn > span[data-i18n] {
       display: block;
       font-size: 9px;
       line-height: 1.1;
@@ -1032,7 +1032,7 @@
     /* Defer the rect inside/outside radio choice to a long-press panel
        (Phase 3). Inside the cramped bottom bar these radios are too
        small to hit reliably. */
-    .group:has(> .tool-btns) #rect-controls { display: none; }
+    .mobile-tool-dock #rect-controls { display: none; }
 
     /* Push floating overlays above the fixed bottom bar so they stay
        readable while the bar is on screen. Both follow the same
@@ -1056,8 +1056,8 @@
 
     /* Long-press tooltips on bottom-bar tool buttons should appear ABOVE
        the button, not below — below would render off-screen. */
-    .group:has(> .tool-btns) [data-tip]:hover::after,
-    .group:has(> .tool-btns) [data-tip].is-tip-active::after {
+    .mobile-tool-dock [data-tip]:hover::after,
+    .mobile-tool-dock [data-tip].is-tip-active::after {
       top: auto;
       bottom: calc(100% + 6px);
     }
@@ -1132,10 +1132,10 @@
     #empty-hint code { font-size: 10px; }
 
     /* Tool tab labels shrink further on narrow phones to avoid wraps. */
-    .group:has(> .tool-btns) .tool-btn > span[data-i18n] {
+    .mobile-tool-dock .tool-btn > span[data-i18n] {
       font-size: 8px;
     }
-    .group:has(> .tool-btns) .tool-btn {
+    .mobile-tool-dock .tool-btn {
       min-height: 50px;
       padding: 5px 1px;
     }
