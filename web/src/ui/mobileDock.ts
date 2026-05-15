@@ -128,18 +128,15 @@ function syncViewportOffset(): void {
   }
   const toggle = document.getElementById('mobile-toolbar-toggle');
   if (toggle) {
-    const safe = getSafeAreaInsetBottomPx();
-    if (collapsed) {
-      // Pin to the viewport bottom so the chevron sits flush against
-      // the URL bar pill, mirroring the way the dock's bottom edge
-      // sits there in expanded state. No `+ safe` since iOS Safari's
-      // URL bar already covers the home-indicator area.
-      toggle.style.bottom = '0px';
-    } else {
-      // Anchor the toggle's bottom edge to the dock's top edge.
-      const dockH = dock ? dock.getBoundingClientRect().height : 64;
-      toggle.style.bottom = `${gap + dockH}px`;
-    }
+    // Anchor the chevron at the expanded position (`bottom = dock
+    // top edge`) and use `transform: translateY()` to slide it down
+    // when collapsed. Animating both elements through `transform`
+    // keeps them on the same GPU compositor path so they never
+    // drift mid-animation.
+    const dockH = dock ? dock.getBoundingClientRect().height : 64;
+    const baseBottom = gap + dockH;
+    toggle.style.bottom = `${baseBottom}px`;
+    toggle.style.transform = collapsed ? `translateY(${baseBottom}px)` : 'translateY(0)';
   }
 }
 

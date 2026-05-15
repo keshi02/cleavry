@@ -1168,7 +1168,11 @@
       border-radius: 8px 8px 0 0;
       box-shadow: 0 -2px 8px rgba(0,0,0,0.18);
       color: var(--muted);
-      transition: bottom 0.22s ease-out, color 0.12s ease-out;
+      /* Animate the collapse via `transform: translateY(...)` so the
+         chevron runs on the same GPU compositor path as the dock —
+         no sub-frame drift between the two elements during the
+         collapse / expand transition. */
+      transition: transform 0.22s ease-out, color 0.12s ease-out;
     }
     #mobile-toolbar-toggle svg {
       width: 18px;
