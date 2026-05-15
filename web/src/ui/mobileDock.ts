@@ -130,9 +130,11 @@ function syncViewportOffset(): void {
   if (toggle) {
     const safe = getSafeAreaInsetBottomPx();
     if (collapsed) {
-      // Sit just above whatever browser chrome / home indicator
-      // is at the viewport bottom.
-      toggle.style.bottom = `${gap + safe}px`;
+      // Pin to the viewport bottom so the chevron sits flush against
+      // the URL bar pill, mirroring the way the dock's bottom edge
+      // sits there in expanded state. No `+ safe` since iOS Safari's
+      // URL bar already covers the home-indicator area.
+      toggle.style.bottom = '0px';
     } else {
       // Anchor the toggle's bottom edge to the dock's top edge.
       const dockH = dock ? dock.getBoundingClientRect().height : 64;

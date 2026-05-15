@@ -1002,9 +1002,13 @@
          no bottom chrome the cost is a small empty strip below the
          dock; acceptable for guaranteed visibility. */
       bottom: max(80px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh));
-      z-index: 30;
+      /* No z-index on the dock — keeping it at the default `auto`
+         means the long-press tooltip (::after at z-index: 100) is
+         compared against the chevron toggle (z-index: 31) at the
+         document stacking context instead of being trapped inside
+         the dock's own stack. Result: the tooltip can sit above the
+         chevron, which is what the user expects on long-press. */
       background-color: var(--panel);
-      border-top: 3px solid var(--accent);
       padding: 6px 8px;
       padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
       margin: 0;
