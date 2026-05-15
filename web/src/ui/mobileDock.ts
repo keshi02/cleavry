@@ -96,13 +96,14 @@ function syncViewportOffset(): void {
   }
   if (isIOSPlatform) {
     // visualViewport reports the entire chrome footprint (the URL bar
-    // pill plus the empty padding around it). Sitting the dock at the
-    // top of that footprint leaves a visible gap between the dock and
-    // the pill itself. Trim ~30px so the dock sits flush against the
-    // pill rather than the chrome top edge. Falls back to a fixed
-    // value when visualViewport reports zero (iOS WebKit bug).
+    // pill plus all the empty padding around and above it). Anchoring
+    // the dock to that number leaves the dock floating well above the
+    // pill itself. Cap at 80px — the URL bar pill plus a small buffer
+    // — so the dock sits flush with the pill top across iPhone
+    // models, whether vv reports 80 or 163. Floor of 50 covers the
+    // iOS WebKit case where vv returns zero.
     if (gap === 0) gap = 50;
-    else gap = Math.max(20, gap - 30);
+    gap = Math.min(gap, 80);
   }
   document.documentElement.style.setProperty('--vv-bottom-offset', `${gap}px`);
 
