@@ -36,6 +36,12 @@ export function initMobileDock(): void {
   detectIOSPlatform();
   tagToolDock();
   injectDebugStrip();
+  // setupCollapseToggle has to land BEFORE syncViewportOffset so the
+  // initial body-class state (read from localStorage) is in place when
+  // we compute the toggle's bottom offset. Otherwise the toggle stays
+  // pinned to the "expanded" position forever and the user sees the
+  // chevron drift out of sync with the dock state.
+  setupCollapseToggle();
   syncViewportOffset();
   const vv = window.visualViewport;
   if (vv) {
@@ -45,7 +51,6 @@ export function initMobileDock(): void {
   window.addEventListener('resize', syncViewportOffset);
   window.addEventListener('orientationchange', syncViewportOffset);
 
-  setupCollapseToggle();
   setupLongPressTooltips();
 }
 
@@ -204,6 +209,11 @@ function setupCollapseToggle(): void {
     const collapsed = document.body.classList.toggle('mobile-tools-collapsed');
     toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
     try { localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0'); } catch (_) {}
+    // Re-sync inline positions so the toggle's bottom tracks the new
+    // collapsed/expanded state. Without this the chevron stays where
+    // it was at init time and the user sees the icon drift out of
+    // sync with the dock.
+    syncViewportOffset();
   });
 }
 
