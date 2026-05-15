@@ -979,14 +979,23 @@
     }
 
     /* ── Bottom tool bar (lifted from inline group via position:fixed) ──
-       `--vv-bottom-offset` is updated from JS via the visualViewport API
-       so the bar clears iOS Safari's bottom URL/tab bar. Falls back to 0
-       on browsers / contexts without that API. */
+       The chrome offset is computed two ways. The first is a JS-set
+       custom property `--vv-bottom-offset` from the visualViewport API
+       (works on every browser with visualViewport, but iOS Safari
+       sometimes reports `vv.height == innerHeight` even when its
+       bottom URL bar is overlaying content, leaving us with 0). The
+       second is `calc(100vh - 100dvh)` — pure CSS, no JS — which on
+       any browser with dvh support (Safari 15.4+, Chrome 108+) is
+       exactly the chrome height currently subtracted from the
+       dynamic viewport. The dvh form is declared second so it wins
+       the cascade when supported; the var form remains a fallback
+       for older browsers. */
     .mobile-tool-dock {
       position: fixed;
       left: 0;
       right: 0;
       bottom: var(--vv-bottom-offset, 0px);
+      bottom: calc(100vh - 100dvh);
       z-index: 30;
       background: var(--panel);
       border-top: 1px solid var(--border);
@@ -1040,18 +1049,22 @@
        either. When the bar is collapsed they drop back down. */
     #toast {
       bottom: calc(72px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
+      bottom: calc(72px + env(safe-area-inset-bottom, 0px) + 100vh - 100dvh);
       transition: bottom 0.22s ease-out, opacity 0.18s ease-out, transform 0.18s ease-out;
     }
     #separate-bar, #cleanup-bar {
       bottom: calc(80px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
+      bottom: calc(80px + env(safe-area-inset-bottom, 0px) + 100vh - 100dvh);
       transition: bottom 0.22s ease-out;
     }
     body.mobile-tools-collapsed #toast {
       bottom: calc(16px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px) + 100vh - 100dvh);
     }
     body.mobile-tools-collapsed #separate-bar,
     body.mobile-tools-collapsed #cleanup-bar {
       bottom: calc(20px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
+      bottom: calc(20px + env(safe-area-inset-bottom, 0px) + 100vh - 100dvh);
     }
 
     /* Long-press tooltips on bottom-bar tool buttons should appear ABOVE
@@ -1088,6 +1101,7 @@
       position: fixed;
       right: 12px;
       bottom: calc(64px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
+      bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 100vh - 100dvh);
       z-index: 31;
       width: 44px;
       height: 22px;
@@ -1115,6 +1129,7 @@
     #mobile-toolbar-toggle:hover { color: var(--text); }
     body.mobile-tools-collapsed #mobile-toolbar-toggle {
       bottom: calc(env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 100vh - 100dvh);
     }
     body.mobile-tools-collapsed #mobile-toolbar-toggle svg {
       transform: rotate(180deg);
