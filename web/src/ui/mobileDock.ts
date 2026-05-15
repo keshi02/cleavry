@@ -108,7 +108,13 @@ function tagToolDock(): void {
   console.log('[mobileDock] parent:', group?.tagName, '/', group?.className);
   if (group) {
     group.classList.add('mobile-tool-dock');
-    console.log('[mobileDock] tagged. classes now:', group.className);
+    // Re-parent to <body> so iOS Safari's containing-block bug for
+    // position:fixed inside `overflow: auto` ancestors (here, #toolbar)
+    // can't drag the dock back into the toolbar's coordinate system.
+    // Tool buttons keep their click handlers (event listeners follow
+    // the element across moves) so no other wiring needs to change.
+    document.body.appendChild(group);
+    console.log('[mobileDock] tagged + re-parented. classes now:', group.className);
     // Measure after the next layout so we get the real applied geometry.
     requestAnimationFrame(() => {
       const rect = group.getBoundingClientRect();
