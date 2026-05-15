@@ -138,19 +138,42 @@ function syncViewportOffset(): void {
   const vv = window.visualViewport;
   let gap = 0;
   if (vv) {
-    // window.innerHeight is the layout viewport height (constant across
-    // chrome show/hide on iOS). vv.height + vv.offsetTop is where the
-    // visible region ends in layout coords. Their difference is exactly
-    // the browser chrome covering the bottom — when iOS bothers to
-    // report it; sometimes it stays at 0 even with chrome visible.
     gap = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
   }
-  // iOS Safari floor: even when both visualViewport and 100dvh report
-  // zero, the bottom URL bar still overlays content. Force a minimum
-  // clearance so the dock is always above chrome.
   if (isIOSPlatform) gap = Math.max(gap, IOS_MIN_CHROME_PX);
   document.documentElement.style.setProperty('--vv-bottom-offset', `${gap}px`);
+
+  // Belt-and-suspenders: CSS-cascade evidence on real iPhones shows the
+  // dock staying at bottom:0 even when the CSS rule should resolve to a
+  // larger value (likely var() not propagating into a max() in some
+  // iOS WebKit builds). Apply the bottom directly as inline style so
+  // it can't be overridden by anything short of !important.
+  const dock = document.querySelector<HTMLElement>('.mobile-tool-dock');
+  if (dock) dock.style.bottom = `${gap}px`;
+  const toggle = document.getElementById('mobile-toolbar-toggle');
+  if (toggle) {
+    // Toggle sits 64px above the dock's top, plus safe-area.
+    // safe-area-inset-bottom isn't readable from JS, but the existing
+    // CSS uses env(safe-area-inset-bottom, 0px); we approximate with a
+    // separately-rendered probe to read its computed value.
+    const safe = getSafeAreaInsetBottomPx();
+    const collapsed = document.body.classList.contains('mobile-tools-collapsed');
+    toggle.style.bottom = `${(collapsed ? 0 : 64) + safe + gap}px`;
+  }
+
   console.log('[mobileDock] offset set to', gap, 'px; vv:', vv?.height, '/', window.innerHeight);
+}
+
+// Read env(safe-area-inset-bottom) by computing it on a hidden probe
+// element. Falls back to 0 if not available.
+let safeAreaProbe: HTMLElement | null = null;
+function getSafeAreaInsetBottomPx(): number {
+  if (!safeAreaProbe) {
+    safeAreaProbe = document.createElement('div');
+    safeAreaProbe.style.cssText = 'position:fixed;top:-1px;left:-1px;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none';
+    document.body.appendChild(safeAreaProbe);
+  }
+  return safeAreaProbe.getBoundingClientRect().height || 0;
 }
 
 function setupCollapseToggle(): void {
