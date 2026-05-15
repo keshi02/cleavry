@@ -1187,8 +1187,6 @@
       max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 80px);
       overflow-y: auto;
       overflow-x: hidden;
-      transform: translateY(calc(-100% - env(safe-area-inset-top, 0px) - 80px));
-      transition: transform 0.25s ease-out;
       z-index: 40;
       flex-wrap: wrap;
       flex-direction: row;
@@ -1199,9 +1197,23 @@
       border-radius: 0 0 14px 14px;
       box-shadow: var(--shadow-strong);
       align-content: flex-start;
+      /* `visibility: hidden` skips compositing entirely while still
+         allowing CSS transitions, so the closed toolbar doesn't
+         occupy a fixed layer that occludes the canvas underneath
+         on iOS Safari (the cause of the "canvas disappeared" report
+         after Phase 2 shipped). transform animates the slide. */
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-16px);
+      transition: opacity 0.22s ease-out, transform 0.22s ease-out, visibility 0s linear 0.22s;
     }
     body.mobile-menu-open #toolbar {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
       transform: translateY(0);
+      transition: opacity 0.22s ease-out, transform 0.22s ease-out, visibility 0s linear 0s;
     }
     /* In the sheet, each group sits on its own full-width row so the
        sliders and labels have room. */
@@ -1256,18 +1268,23 @@
     }
 
     #mobile-menu-backdrop {
-      display: block;
       position: fixed;
       inset: 0;
       background: var(--scrim);
       z-index: 38;
+      /* Same visibility-based approach as the toolbar: invisible
+         when closed means no fixed compositing layer covering the
+         canvas. */
+      visibility: hidden;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.22s ease-out;
+      transition: opacity 0.22s ease-out, visibility 0s linear 0.22s;
     }
     body.mobile-menu-open #mobile-menu-backdrop {
+      visibility: visible;
       opacity: 1;
       pointer-events: auto;
+      transition: opacity 0.22s ease-out, visibility 0s linear 0s;
     }
 
     /* ── Collapse handle ──────────────────────────────────────────────

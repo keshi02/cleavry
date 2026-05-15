@@ -76,6 +76,10 @@ function detectIOSPlatform(): void {
 // when a body-class state changes on certain iOS Safari builds; a
 // plain class selector is rock-solid.
 function tagToolDock(): void {
+  // Only run on mobile — on desktop the tool buttons must remain in
+  // their original group inside #toolbar, otherwise re-parenting moves
+  // them past #app and they disappear under `body { overflow: hidden }`.
+  if (!matchMedia('(max-width: 768px)').matches) return;
   const toolBtns = document.querySelector<HTMLElement>('#toolbar .tool-btns');
   const group = toolBtns?.parentElement;
   if (group) {
