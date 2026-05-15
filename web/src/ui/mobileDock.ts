@@ -106,13 +106,21 @@ function syncViewportOffset(): void {
   if (dock) dock.style.bottom = `${gap}px`;
   const toggle = document.getElementById('mobile-toolbar-toggle');
   if (toggle) {
-    // Toggle sits 64px above the dock's top, plus safe-area.
-    // safe-area-inset-bottom isn't readable from JS, but the existing
-    // CSS uses env(safe-area-inset-bottom, 0px); we approximate with a
-    // separately-rendered probe to read its computed value.
     const safe = getSafeAreaInsetBottomPx();
     const collapsed = document.body.classList.contains('mobile-tools-collapsed');
-    toggle.style.bottom = `${(collapsed ? 0 : 64) + safe + gap}px`;
+    if (collapsed) {
+      // Anchored to the safe content area just above any browser
+      // chrome / home indicator.
+      toggle.style.bottom = `${gap + safe}px`;
+    } else {
+      // Anchor the toggle's bottom edge to the dock's top edge.
+      // Measure the dock's actual rendered height so the chevron
+      // sits flush regardless of border, padding, or safe-area
+      // contributions — the previous fixed 64px constant was 3px
+      // short of the real height (forgot the 3px accent border).
+      const dockH = dock ? dock.getBoundingClientRect().height : 64;
+      toggle.style.bottom = `${gap + dockH}px`;
+    }
   }
 }
 
@@ -185,7 +193,9 @@ function setupLongPressTooltips(): void {
 
   document.addEventListener('pointerdown', (e) => {
     if (e.pointerType !== 'touch') return;
-    const target = (e.target as HTMLElement | null)?.closest<HTMLElement>('#toolbar [data-tip]');
+    // Dock buttons are also targets since the dock is re-parented out
+    // of #toolbar into <body> on mobile.
+    const target = (e.target as HTMLElement | null)?.closest<HTMLElement>('#toolbar [data-tip], .mobile-tool-dock [data-tip]');
     if (!target) return;
     dismissTip();
     startX = e.clientX;
