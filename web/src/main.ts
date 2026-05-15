@@ -1981,11 +1981,20 @@ function bindCanvas() {
       }
       const pts = [...activePointers.values()];
       const a = pts[0], b = pts[1];
+      const wsRect = workspace.getBoundingClientRect();
       pinchState = {
         startDist: Math.hypot(b.x - a.x, b.y - a.y) || 1,
         startZoom: state.zoom,
         startPanX: state.panX,
         startPanY: state.panY,
+        // Capture the initial midpoint in workspace coordinates so
+        // two-finger drag (translation of the midpoint, no scale
+        // change) translates the canvas pan by the same delta. Using
+        // the *current* midpoint inside the move formula collapses
+        // the pan term to zero when the ratio is 1 — that's why
+        // two-finger pan felt frozen even though pinch-zoom worked.
+        startCx: ((a.x + b.x) / 2) - wsRect.left,
+        startCy: ((a.y + b.y) / 2) - wsRect.top,
       };
       e.preventDefault();
       return;
@@ -2008,14 +2017,17 @@ function bindCanvas() {
       const dist = Math.hypot(b.x - a.x, b.y - a.y) || 1;
       const factor = dist / pinchState.startDist;
       const newZoom = clamp(pinchState.startZoom * factor, 0.05, 32);
-      // Pinch around the midpoint of the two fingers — that midpoint
-      // (image-space) should stay under the user's touch as zoom changes.
       const wsRect = workspace.getBoundingClientRect();
       const cx = (a.x + b.x) / 2 - wsRect.left;
       const cy = (a.y + b.y) / 2 - wsRect.top;
       const ratio = newZoom / pinchState.startZoom;
-      state.panX = cx - (cx - pinchState.startPanX) * ratio;
-      state.panY = cy - (cy - pinchState.startPanY) * ratio;
+      // Combined zoom + pan: keep the image point that was under the
+      // starting midpoint anchored to the *current* midpoint. Pan term
+      // uses the initial midpoint so that pure midpoint translation
+      // (ratio = 1) moves the pan by the same delta — that's the
+      // two-finger pan motion the user expects.
+      state.panX = cx - (pinchState.startCx - pinchState.startPanX) * ratio;
+      state.panY = cy - (pinchState.startCy - pinchState.startPanY) * ratio;
       state.zoom = newZoom;
       applyTransform();
       updateStatus();
