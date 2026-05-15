@@ -1049,6 +1049,15 @@
        small to hit reliably. */
     .mobile-tool-dock #rect-controls { display: none; }
 
+    /* iOS Safari's bottom URL bar already overlaps the home-indicator
+       safe area, so adding env(safe-area-inset-bottom) to the dock's
+       padding-bottom on top of that just stacks empty space between
+       the tool buttons and the URL bar pill. Drop the inset on iOS
+       to keep the buttons flush with the dock's bottom edge. */
+    html.ios .mobile-tool-dock {
+      padding-bottom: 6px;
+    }
+
     /* ── iOS Safari minimum clearance ────────────────────────────────
        iOS Safari (real-device evidence) can have its bottom URL bar
        overlap content without subtracting that area from either the
