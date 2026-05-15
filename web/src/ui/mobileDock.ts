@@ -33,6 +33,7 @@ const LONG_PRESS_MOVE_TOL = 10;
 const TIP_AUTODISMISS_MS = 2500;
 
 export function initMobileDock(): void {
+  detectIOSPlatform();
   tagToolDock();
   syncViewportOffset();
   const vv = window.visualViewport;
@@ -45,6 +46,19 @@ export function initMobileDock(): void {
 
   setupCollapseToggle();
   setupLongPressTooltips();
+}
+
+// Tag <html> so iOS-specific rules can force a minimum bottom clearance
+// even when neither visualViewport nor `100dvh` reports any chrome.
+// iOS Safari with the bottom URL bar can leave both reporting zero
+// while still overlaying ~60-90px of content with translucent chrome.
+function detectIOSPlatform(): void {
+  const ua = navigator.userAgent;
+  // Match iPhone / iPod / iPad. Also catches iPadOS 13+ which masquerades
+  // as Mac but exposes touch.
+  const isIOS = /iPad|iPhone|iPod/.test(ua)
+              || (/Macintosh/.test(ua) && 'ontouchend' in document);
+  if (isIOS) document.documentElement.classList.add('ios');
 }
 
 // Tag the .group that wraps the .tool-btns container so the mobile

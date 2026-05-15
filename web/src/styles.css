@@ -1050,6 +1050,41 @@
        small to hit reliably. */
     .mobile-tool-dock #rect-controls { display: none; }
 
+    /* ── iOS Safari minimum clearance ────────────────────────────────
+       iOS Safari (real-device evidence) can have its bottom URL bar
+       overlap content without subtracting that area from either the
+       VisualViewport API or `100dvh`. Force at least 60px of bottom
+       clearance whenever we're on iOS so the dock doesn't end up
+       parked under translucent chrome. */
+    html.ios .mobile-tool-dock {
+      bottom: max(60px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh));
+    }
+    html.ios #mobile-toolbar-toggle {
+      bottom: calc(64px + env(safe-area-inset-bottom, 0px)
+                   + max(60px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
+    }
+    html.ios body.mobile-tools-collapsed #mobile-toolbar-toggle {
+      bottom: calc(env(safe-area-inset-bottom, 0px)
+                   + max(60px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
+    }
+    html.ios #toast {
+      bottom: calc(72px + env(safe-area-inset-bottom, 0px)
+                   + max(60px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
+    }
+    html.ios #separate-bar, html.ios #cleanup-bar {
+      bottom: calc(80px + env(safe-area-inset-bottom, 0px)
+                   + max(60px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
+    }
+    html.ios body.mobile-tools-collapsed #toast {
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px)
+                   + max(60px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
+    }
+    html.ios body.mobile-tools-collapsed #separate-bar,
+    html.ios body.mobile-tools-collapsed #cleanup-bar {
+      bottom: calc(20px + env(safe-area-inset-bottom, 0px)
+                   + max(60px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
+    }
+
     /* Push floating overlays above the fixed bottom bar so they stay
        readable while the bar is on screen. Both follow the same
        viewport offset so they don't tuck under iOS Safari chrome
