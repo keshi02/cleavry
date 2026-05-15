@@ -1649,7 +1649,20 @@ function bindUI() {
   $('redo-btn').onclick = redoFn;
   $('fit-btn').onclick = fitToScreen;
   $('actual-btn').onclick = actualSize;
-  $('help-btn').onclick = () => $('help-overlay').classList.toggle('show');
+  $('help-btn').onclick = () => {
+    const overlay = $('help-overlay');
+    // On mobile the shortcut tabs (file / tool / brush / history) are
+    // hidden, so the default `file` tab would show an empty panel. Jump
+    // to `features`, which contains every feature description, the
+    // first time the dialog is opened on a small screen.
+    if (!overlay.classList.contains('show') && matchMedia('(max-width: 768px)').matches) {
+      $('help-box').setAttribute('data-help-tab', 'features');
+      document.querySelectorAll('#help-tabs button').forEach(b => {
+        b.classList.toggle('active', (b as HTMLElement).dataset.helpTarget === 'features');
+      });
+    }
+    overlay.classList.toggle('show');
+  };
   $('help-close').onclick = () => $('help-overlay').classList.remove('show');
   // Help category tabs — switch the [data-help-tab] on #help-box, which
   // CSS uses to flip the visibility of each .help-section.

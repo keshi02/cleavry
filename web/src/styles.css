@@ -869,7 +869,10 @@
     white-space: pre-line;
     max-width: 260px;
     width: max-content;
-    z-index: 100;
+    /* Very high so the tooltip is guaranteed to land above the
+       mobile chevron (z-index: 31) and any other positioned overlay
+       except the help/modal layers. */
+    z-index: 9999;
     pointer-events: none;
     box-shadow: var(--shadow-soft);
     animation: tip-fade 0.12s ease-out 0.15s both;
@@ -1143,6 +1146,30 @@
       font-size: 11px;
       padding: 6px 8px;
     }
+
+    /* ── Help dialog: feature-only on mobile ─────────────────────────
+       Keyboard shortcuts aren't actionable on phones, so hide the
+       tabs that are purely shortcuts (file / tool / brush / history)
+       and the kbd-anchored rows in mixed tabs. Mobile users get the
+       full feature descriptions in the `features` tab. */
+    #help-tabs button[data-help-target="file"],
+    #help-tabs button[data-help-target="tool"],
+    #help-tabs button[data-help-target="brush"],
+    #help-tabs button[data-help-target="history"] {
+      display: none;
+    }
+    .help-section[data-section="file"],
+    .help-section[data-section="tool"],
+    .help-section[data-section="brush"],
+    .help-section[data-section="history"] {
+      display: none !important;
+    }
+    /* Hide kbd-anchored shortcut rows in any remaining section
+       (e.g. the `view` tab's wheel / Cmd+0 / Cmd+1 entries). The
+       feature rows (e.g. `元画像比較`, `2 本指ピンチ`) don't carry
+       <kbd> so they remain visible. */
+    .help-section dt:has(kbd) { display: none; }
+    .help-section dt:has(kbd) + dd { display: none; }
 
     /* ── Collapse handle ──────────────────────────────────────────────
        A small chevron attached to the top edge of the bottom bar.
