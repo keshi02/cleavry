@@ -95,14 +95,12 @@ function syncViewportOffset(): void {
     gap = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
   }
   if (isIOSPlatform) {
-    // visualViewport-based detection has been unreliable across the
-    // iPhone models tested — neither the JS fallback floor nor the
-    // 80px cap reliably places the dock flush with the URL bar pill.
-    // Just pin the dock to a fixed 30px lift on iOS so it sits right
-    // against the pill regardless of what vv claims the chrome
-    // footprint is. The 3px accent border above the dock makes the
-    // bottom edge unambiguous even with some chrome overlap.
-    gap = 30;
+    // Pin the dock to the viewport bottom on iOS. The URL bar pill
+    // overlaps the lower portion of the dock, but the accent stripe
+    // at the dock's top edge keeps the boundary visible and the
+    // tool buttons sit high enough within the dock to clear the
+    // pill area in practice.
+    gap = 0;
   }
   document.documentElement.style.setProperty('--vv-bottom-offset', `${gap}px`);
 
