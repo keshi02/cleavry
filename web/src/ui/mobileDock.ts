@@ -35,7 +35,6 @@ const TIP_AUTODISMISS_MS = 2500;
 export function initMobileDock(): void {
   detectIOSPlatform();
   tagToolDock();
-  injectDebugStrip();
   // setupCollapseToggle has to land BEFORE syncViewportOffset so the
   // initial body-class state (read from localStorage) is in place when
   // we compute the toggle's bottom offset. Otherwise the toggle stays
@@ -68,7 +67,6 @@ function detectIOSPlatform(): void {
   isIOSPlatform = /iPad|iPhone|iPod/.test(ua)
               || (/Macintosh/.test(ua) && 'ontouchend' in document);
   if (isIOSPlatform) document.documentElement.classList.add('ios');
-  console.log('[mobileDock] iOS detected:', isIOSPlatform, 'UA:', ua.slice(0, 80));
 }
 
 // Tag the .group that wraps the .tool-btns container so the mobile
@@ -76,41 +74,9 @@ function detectIOSPlatform(): void {
 // Field reports indicate `:has()` styling occasionally fails to update
 // when a body-class state changes on certain iOS Safari builds; a
 // plain class selector is rock-solid.
-// ★ DEBUG: Inserts an unconditional bright red strip at the same
-// position the dock should occupy. If the user sees the red strip
-// but not the dock, the issue is the dock element's styling. If
-// the user doesn't see the red strip either, then `position:fixed;
-// bottom:80px` itself isn't working in this context — meaning the
-// containing block isn't the viewport (some ancestor with transform
-// or filter), or the element is being clipped, or layout is broken.
-function injectDebugStrip(): void {
-  const strip = document.createElement('div');
-  strip.id = 'mobile-dock-debug-strip';
-  strip.style.cssText = [
-    'position: fixed',
-    'bottom: 80px',
-    'left: 0',
-    'right: 0',
-    'height: 24px',
-    'background: #ff0000',
-    'z-index: 9999',
-    'pointer-events: none',
-    'border-top: 4px solid #ffff00',
-    'border-bottom: 4px solid #ffff00',
-  ].join(';');
-  strip.textContent = 'DEBUG STRIP @ bottom:80px';
-  strip.style.color = '#ffffff';
-  strip.style.fontSize = '12px';
-  strip.style.lineHeight = '24px';
-  strip.style.textAlign = 'center';
-  document.body.appendChild(strip);
-}
-
 function tagToolDock(): void {
   const toolBtns = document.querySelector<HTMLElement>('#toolbar .tool-btns');
-  console.log('[mobileDock] tool-btns found:', !!toolBtns);
   const group = toolBtns?.parentElement;
-  console.log('[mobileDock] parent:', group?.tagName, '/', group?.className);
   if (group) {
     group.classList.add('mobile-tool-dock');
     // Re-parent to <body> so iOS Safari's containing-block bug for
@@ -119,29 +85,6 @@ function tagToolDock(): void {
     // Tool buttons keep their click handlers (event listeners follow
     // the element across moves) so no other wiring needs to change.
     document.body.appendChild(group);
-    console.log('[mobileDock] tagged + re-parented. classes now:', group.className);
-    // Measure after the next layout so we get the real applied geometry.
-    requestAnimationFrame(() => {
-      const rect = group.getBoundingClientRect();
-      const cs = getComputedStyle(group);
-      console.log('[mobileDock] geometry:', JSON.stringify({
-        top: Math.round(rect.top),
-        bottom: Math.round(rect.bottom),
-        height: Math.round(rect.height),
-        width: Math.round(rect.width),
-        innerH: window.innerHeight,
-        vvH: window.visualViewport?.height,
-        vvOff: window.visualViewport?.offsetTop,
-        position: cs.position,
-        bg: cs.backgroundColor,
-        cssBottom: cs.bottom,
-        transform: cs.transform,
-        zIndex: cs.zIndex,
-        display: cs.display,
-        visibility: cs.visibility,
-        collapsed: document.body.classList.contains('mobile-tools-collapsed'),
-      }));
-    });
   }
 }
 
@@ -171,8 +114,6 @@ function syncViewportOffset(): void {
     const collapsed = document.body.classList.contains('mobile-tools-collapsed');
     toggle.style.bottom = `${(collapsed ? 0 : 64) + safe + gap}px`;
   }
-
-  console.log('[mobileDock] offset set to', gap, 'px; vv:', vv?.height, '/', window.innerHeight);
 }
 
 // Read env(safe-area-inset-bottom) by computing it on a hidden probe

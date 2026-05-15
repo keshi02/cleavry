@@ -1003,13 +1003,8 @@
          dock; acceptable for guaranteed visibility. */
       bottom: max(80px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh));
       z-index: 30;
-      /* ★ DEBUG: super-saturated colours with !important to defeat any
-         cascade override. If the dock still looks invisible with these
-         applied, the dock simply isn't being rendered at the expected
-         viewport rect. */
-      background-color: #ff00aa !important;
-      border-top: 6px solid #00ffff !important;
-      min-height: 80px !important;
+      background-color: var(--panel);
+      border-top: 3px solid var(--accent);
       padding: 6px 8px;
       padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
       margin: 0;
