@@ -54,8 +54,35 @@ export function initMobileDock(): void {
 // plain class selector is rock-solid.
 function tagToolDock(): void {
   const toolBtns = document.querySelector<HTMLElement>('#toolbar .tool-btns');
+  console.log('[mobileDock] tool-btns found:', !!toolBtns);
   const group = toolBtns?.parentElement;
-  if (group) group.classList.add('mobile-tool-dock');
+  console.log('[mobileDock] parent:', group?.tagName, '/', group?.className);
+  if (group) {
+    group.classList.add('mobile-tool-dock');
+    console.log('[mobileDock] tagged. classes now:', group.className);
+    // Measure after the next layout so we get the real applied geometry.
+    requestAnimationFrame(() => {
+      const rect = group.getBoundingClientRect();
+      const cs = getComputedStyle(group);
+      console.log('[mobileDock] geometry:', JSON.stringify({
+        top: Math.round(rect.top),
+        bottom: Math.round(rect.bottom),
+        height: Math.round(rect.height),
+        width: Math.round(rect.width),
+        innerH: window.innerHeight,
+        vvH: window.visualViewport?.height,
+        vvOff: window.visualViewport?.offsetTop,
+        position: cs.position,
+        bg: cs.backgroundColor,
+        cssBottom: cs.bottom,
+        transform: cs.transform,
+        zIndex: cs.zIndex,
+        display: cs.display,
+        visibility: cs.visibility,
+        collapsed: document.body.classList.contains('mobile-tools-collapsed'),
+      }));
+    });
+  }
 }
 
 function syncViewportOffset(): void {

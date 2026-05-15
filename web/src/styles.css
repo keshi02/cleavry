@@ -997,24 +997,21 @@
       bottom: var(--vv-bottom-offset, 0px);
       bottom: max(var(--vv-bottom-offset, 0px), calc(100vh - 100dvh));
       z-index: 30;
-      /* Solid panel background. On dark themes the default --panel is
-         very close to the workspace checker pattern, so we explicitly
-         force the (slightly lighter) hi variant for the dock to be
-         visibly distinct against the canvas behind it. */
-      background-color: var(--panel-hi);
-      /* Strong accent stripe at the top of the dock — guarantees the
-         dock's edge is visible regardless of theme contrast. */
-      border-top: 2px solid var(--accent);
+      /* ★ DEBUG: unmistakable colours so we can see whether the dock is
+         rendering at all on the user's iPhone. If they see ORANGE + a
+         GREEN top border, the element is on screen and visible — the
+         issue is contrast / colour. If they see neither, the bar is
+         genuinely not rendering or is positioned off-viewport, and
+         we need a different fix. Revert these to var(--panel-hi) /
+         var(--accent) once the dock is confirmed visible. */
+      background-color: #ff6e00;
+      border-top: 4px solid #00ff66;
       padding: 6px 8px;
       padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
       margin: 0;
       gap: 0;
       box-shadow: 0 -8px 24px rgba(0,0,0,0.4);
       transition: bottom 0.18s ease-out, transform 0.22s ease-out;
-      /* Explicit baseline so the collapse transition has a defined start
-         state, and a GPU compositing hint to keep iOS rendering steady. */
-      transform: translateY(0);
-      will-change: transform;
     }
     /* Collapsed: slide the bar fully below the visible area. Extra 12px
        so the box-shadow ghost doesn't peek. */
