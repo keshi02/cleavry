@@ -35,6 +35,7 @@ const TIP_AUTODISMISS_MS = 2500;
 export function initMobileDock(): void {
   detectIOSPlatform();
   tagToolDock();
+  injectDebugStrip();
   syncViewportOffset();
   const vv = window.visualViewport;
   if (vv) {
@@ -70,6 +71,36 @@ function detectIOSPlatform(): void {
 // Field reports indicate `:has()` styling occasionally fails to update
 // when a body-class state changes on certain iOS Safari builds; a
 // plain class selector is rock-solid.
+// ★ DEBUG: Inserts an unconditional bright red strip at the same
+// position the dock should occupy. If the user sees the red strip
+// but not the dock, the issue is the dock element's styling. If
+// the user doesn't see the red strip either, then `position:fixed;
+// bottom:80px` itself isn't working in this context — meaning the
+// containing block isn't the viewport (some ancestor with transform
+// or filter), or the element is being clipped, or layout is broken.
+function injectDebugStrip(): void {
+  const strip = document.createElement('div');
+  strip.id = 'mobile-dock-debug-strip';
+  strip.style.cssText = [
+    'position: fixed',
+    'bottom: 80px',
+    'left: 0',
+    'right: 0',
+    'height: 24px',
+    'background: #ff0000',
+    'z-index: 9999',
+    'pointer-events: none',
+    'border-top: 4px solid #ffff00',
+    'border-bottom: 4px solid #ffff00',
+  ].join(';');
+  strip.textContent = 'DEBUG STRIP @ bottom:80px';
+  strip.style.color = '#ffffff';
+  strip.style.fontSize = '12px';
+  strip.style.lineHeight = '24px';
+  strip.style.textAlign = 'center';
+  document.body.appendChild(strip);
+}
+
 function tagToolDock(): void {
   const toolBtns = document.querySelector<HTMLElement>('#toolbar .tool-btns');
   console.log('[mobileDock] tool-btns found:', !!toolBtns);
