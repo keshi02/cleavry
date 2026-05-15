@@ -995,17 +995,16 @@
       left: 0;
       right: 0;
       bottom: var(--vv-bottom-offset, 0px);
-      bottom: max(var(--vv-bottom-offset, 0px), calc(100vh - 100dvh));
+      /* 80px floor on every mobile device. iOS Safari's bottom URL bar
+         is ~50-90px and neither visualViewport nor `100dvh` reliably
+         reports it — applying the floor here ensures the dock always
+         sits above chrome regardless of detection. On platforms with
+         no bottom chrome the cost is a small empty strip below the
+         dock; acceptable for guaranteed visibility. */
+      bottom: max(80px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh));
       z-index: 30;
-      /* ★ DEBUG: unmistakable colours so we can see whether the dock is
-         rendering at all on the user's iPhone. If they see ORANGE + a
-         GREEN top border, the element is on screen and visible — the
-         issue is contrast / colour. If they see neither, the bar is
-         genuinely not rendering or is positioned off-viewport, and
-         we need a different fix. Revert these to var(--panel-hi) /
-         var(--accent) once the dock is confirmed visible. */
-      background-color: #ff6e00;
-      border-top: 4px solid #00ff66;
+      background-color: var(--panel-hi);
+      border-top: 2px solid var(--accent);
       padding: 6px 8px;
       padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
       margin: 0;
@@ -1091,22 +1090,22 @@
        either. When the bar is collapsed they drop back down. */
     #toast {
       bottom: calc(72px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
-      bottom: calc(72px + env(safe-area-inset-bottom, 0px) + max(var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
+      bottom: calc(72px + env(safe-area-inset-bottom, 0px) + max(80px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
       transition: bottom 0.22s ease-out, opacity 0.18s ease-out, transform 0.18s ease-out;
     }
     #separate-bar, #cleanup-bar {
       bottom: calc(80px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
-      bottom: calc(80px + env(safe-area-inset-bottom, 0px) + max(var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
+      bottom: calc(80px + env(safe-area-inset-bottom, 0px) + max(80px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
       transition: bottom 0.22s ease-out;
     }
     body.mobile-tools-collapsed #toast {
       bottom: calc(16px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
-      bottom: calc(16px + env(safe-area-inset-bottom, 0px) + max(var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px) + max(80px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
     }
     body.mobile-tools-collapsed #separate-bar,
     body.mobile-tools-collapsed #cleanup-bar {
       bottom: calc(20px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
-      bottom: calc(20px + env(safe-area-inset-bottom, 0px) + max(var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
+      bottom: calc(20px + env(safe-area-inset-bottom, 0px) + max(80px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
     }
 
     /* Long-press tooltips on bottom-bar tool buttons should appear ABOVE
@@ -1143,7 +1142,7 @@
       position: fixed;
       right: 12px;
       bottom: calc(64px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
-      bottom: calc(64px + env(safe-area-inset-bottom, 0px) + max(var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
+      bottom: calc(64px + env(safe-area-inset-bottom, 0px) + max(80px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
       z-index: 31;
       width: 44px;
       height: 22px;
@@ -1171,7 +1170,7 @@
     #mobile-toolbar-toggle:hover { color: var(--text); }
     body.mobile-tools-collapsed #mobile-toolbar-toggle {
       bottom: calc(env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
-      bottom: calc(env(safe-area-inset-bottom, 0px) + max(var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
+      bottom: calc(env(safe-area-inset-bottom, 0px) + max(80px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
     }
     body.mobile-tools-collapsed #mobile-toolbar-toggle svg {
       transform: rotate(180deg);
