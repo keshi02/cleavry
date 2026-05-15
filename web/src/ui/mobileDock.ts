@@ -94,7 +94,16 @@ function syncViewportOffset(): void {
   if (vv) {
     gap = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
   }
-  if (isIOSPlatform) gap = Math.max(gap, IOS_MIN_CHROME_PX);
+  if (isIOSPlatform) {
+    // visualViewport reports the entire chrome footprint (the URL bar
+    // pill plus the empty padding around it). Sitting the dock at the
+    // top of that footprint leaves a visible gap between the dock and
+    // the pill itself. Trim ~30px so the dock sits flush against the
+    // pill rather than the chrome top edge. Falls back to a fixed
+    // value when visualViewport reports zero (iOS WebKit bug).
+    if (gap === 0) gap = 50;
+    else gap = Math.max(20, gap - 30);
+  }
   document.documentElement.style.setProperty('--vv-bottom-offset', `${gap}px`);
 
   // Belt-and-suspenders: CSS-cascade evidence on real iPhones shows the
@@ -168,11 +177,13 @@ function setupCollapseToggle(): void {
     const collapsed = document.body.classList.toggle('mobile-tools-collapsed');
     toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
     try { localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0'); } catch (_) {}
-    // Re-sync inline positions so the toggle's bottom tracks the new
-    // collapsed/expanded state. Without this the chevron stays where
-    // it was at init time and the user sees the icon drift out of
-    // sync with the dock.
+    // Sync once immediately so the position updates are dispatched in
+    // the same frame, then again on the next frame so any layout that
+    // changed because of the body-class toggle is fully resolved
+    // before we measure the dock height (otherwise getBoundingClientRect
+    // can return a stale value on the very click that toggles state).
     syncViewportOffset();
+    requestAnimationFrame(syncViewportOffset);
   });
 }
 
