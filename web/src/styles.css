@@ -925,7 +925,14 @@
   */
   @media (max-width: 768px) {
     html, body { height: 100dvh; }
-    #app { height: 100dvh; }
+    #app {
+      height: 100dvh;
+      /* The Phase 2 toolbar is `position: fixed` so it's no longer a
+         grid participant, and #status is hidden. Override the desktop
+         3-row template so #workspace doesn't end up auto-placed in
+         the leading `auto` row (which would collapse it to 0). */
+      grid-template-rows: 1fr;
+    }
 
     /* Top toolbar: single-row horizontal scroll. */
     #toolbar {
