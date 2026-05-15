@@ -883,39 +883,63 @@
   }
 
   /* ──────────────────────────────────────────────────────────────────
-     Mobile / small-screen toolbar
+     Mobile / small-screen layout (Phase 1)
      ──────────────────────────────────────────────────────────────────
-     The desktop toolbar packs 30+ controls into a wrapping flex row.
-     On phones that wrapping cascade eats most of the viewport. We
-     compact things by:
-       - hiding text labels next to icons (data-tip carries the meaning)
-       - hiding group labels ("ツール:" / "サイズ:" / etc.)
-       - bumping touch-target padding to ~36px
-       - shrinking sliders so they fit on one row
-       - hiding non-critical buttons (fit / 100%) on the smallest screens
+     Two structural moves vs. desktop:
+
+       1. The top toolbar becomes a single horizontally-scrolling strip
+          (file ops, sliders, undo/redo, theme/help). No more wrapping
+          cascade — predictable height, swipe to reach everything.
+
+       2. The .tool-btns group is lifted out of flow with position:fixed
+          and re-anchored to the viewport bottom as a 6-tab tool bar.
+          The `:has()` selector keeps the markup untouched. Labels are
+          shown stacked below each icon since this row is the user's
+          primary editing affordance and benefits from a clear name.
+
+     Workspace consequences:
+       - The fixed bottom bar overlaps the lower ~64px of #workspace.
+         Pinch / pan still work in the visible region; floating bars
+         (#toast, #separate-bar, #cleanup-bar) are raised above it.
+       - #status is hidden on mobile — its info is non-critical and the
+         space is better spent on the tool bar.
+       - 100dvh is used so iOS Safari's auto-hiding chrome doesn't
+         shove the bottom bar past the visible area.
   */
   @media (max-width: 768px) {
+    html, body { height: 100dvh; }
+    #app { height: 100dvh; }
+
+    /* Top toolbar: single-row horizontal scroll. */
     #toolbar {
-      padding: 6px 8px;
-      gap: 6px;
+      padding: 6px 6px;
+      padding-top: calc(6px + env(safe-area-inset-top, 0px));
+      gap: 4px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
     }
+    #toolbar::-webkit-scrollbar { display: none; }
+
     .group {
       padding: 0 4px;
       gap: 4px;
       border-right: none;
+      flex-shrink: 0;
     }
+    /* Defunct in a nowrap toolbar — explicit row breaks and the right-
+       side spacer would otherwise consume horizontal space. */
+    .row-break, .spacer { display: none; }
+
     /* Hide section labels — "ツール:" / "サイズ:" / "硬度:" / "色許容度:". */
-    .group > label[data-i18n] {
-      display: none;
-    }
+    .group > label[data-i18n] { display: none; }
     /* Hide checkbox-label text but keep the checkbox + icon visible. */
-    .group > label[data-i18n-tip] > span[data-i18n^="label."] {
-      display: none;
-    }
+    .group > label[data-i18n-tip] > span[data-i18n^="label."] { display: none; }
     /* Hide text inside icon-text buttons; rely on data-tip + icon. */
-    .icon-btn-text > span[data-i18n] {
-      display: none;
-    }
+    .icon-btn-text > span[data-i18n] { display: none; }
+
     /* Bigger touch targets and bigger glyphs. */
     .icon-btn-text {
       padding: 8px 10px;
@@ -923,57 +947,113 @@
       min-height: 36px;
       justify-content: center;
     }
-    .icon-btn-text svg {
-      width: 18px;
-      height: 18px;
-    }
+    .icon-btn-text svg { width: 18px; height: 18px; }
     .icon-btn {
       width: 36px;
       min-width: 36px;
       height: 36px;
     }
-    .icon-btn svg {
-      width: 18px;
-      height: 18px;
-    }
-    /* Sliders must fit alongside icons on a phone screen. */
-    input[type=range] {
-      width: 90px;
-    }
-    /* The threshold number input next to "≤" / "px²" labels. */
-    input[type=number] {
-      width: 44px;
-    }
-    /* Hide the brand wordmark — saves ~80px of horizontal space.
-       The favicon / page title still convey the brand. */
-    .brand {
-      display: none;
-    }
-    /* Theme + actual-size buttons render plain text, give them
-       comparable padding so they don't collapse next to icon buttons. */
+    .icon-btn svg { width: 18px; height: 18px; }
+
+    /* Sliders fit alongside icons in the horizontal scroll strip. */
+    input[type=range] { width: 110px; height: 28px; }
+    input[type=number] { width: 44px; }
+
+    .brand { display: none; }
+
     #theme-btn, #actual-btn {
       padding: 8px 10px;
       min-height: 36px;
     }
+
+    /* ── Bottom tool bar (lifted from inline group via position:fixed) ── */
+    .group:has(> .tool-btns) {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 30;
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      padding: 6px 8px;
+      padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+      margin: 0;
+      gap: 0;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.18);
+    }
+    .group:has(> .tool-btns) .tool-btns {
+      display: flex;
+      flex: 1;
+      justify-content: space-around;
+      gap: 2px;
+    }
+    .group:has(> .tool-btns) .tool-btn {
+      flex: 1;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      min-height: 52px;
+      padding: 6px 2px;
+      border-radius: 8px;
+    }
+    .group:has(> .tool-btns) .tool-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+    /* Override the generic mobile rule that hides icon-text labels —
+       in the bottom bar the label sits under the icon and is the
+       primary way users identify the tool. */
+    .group:has(> .tool-btns) .tool-btn > span[data-i18n] {
+      display: block;
+      font-size: 9px;
+      line-height: 1.1;
+    }
+    /* Defer the rect inside/outside radio choice to a long-press panel
+       (Phase 3). Inside the cramped bottom bar these radios are too
+       small to hit reliably. */
+    .group:has(> .tool-btns) #rect-controls { display: none; }
+
+    /* Push floating overlays above the fixed bottom bar so they stay
+       readable while the bar is on screen. */
+    #toast {
+      bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    }
+    #separate-bar, #cleanup-bar {
+      bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Status row is non-critical on mobile and would collide with the
+       fixed bottom bar. Hide it; coord / zoom info is available via
+       the help screen and on-canvas behaviour anyway. */
+    #status { display: none; }
+
+    /* Layer panel scales down so it doesn't dominate the workspace. */
+    #layer-panel {
+      top: 8px;
+      right: 8px;
+      min-width: 140px;
+      max-width: 180px;
+      font-size: 11px;
+      padding: 6px 8px;
+    }
   }
 
   @media (max-width: 480px) {
-    /* On phones, drop secondary view controls. Pinch-to-zoom and
-       pan via touch still work; the explicit fit / 100% buttons are
-       redundant. */
-    #fit-btn, #actual-btn {
-      display: none;
+    /* Pinch / pan handle zoom on phones — the explicit fit + 100%
+       buttons just consume scroll real estate in the top strip. */
+    #fit-btn, #actual-btn { display: none; }
+
+    input[type=range] { width: 90px; }
+
+    #empty-hint h2 { font-size: 16px; }
+    #empty-hint code { font-size: 10px; }
+
+    /* Tool tab labels shrink further on narrow phones to avoid wraps. */
+    .group:has(> .tool-btns) .tool-btn > span[data-i18n] {
+      font-size: 8px;
     }
-    /* Tighter slider so size + hardness + tolerance stack readably. */
-    input[type=range] {
-      width: 80px;
-    }
-    /* Empty-hint typography also shrinks so the shortcut row doesn't
-       wrap awkwardly on a 320px-wide phone. */
-    #empty-hint h2 {
-      font-size: 16px;
-    }
-    #empty-hint code {
-      font-size: 10px;
+    .group:has(> .tool-btns) .tool-btn {
+      min-height: 50px;
+      padding: 5px 1px;
     }
   }
