@@ -41,6 +41,7 @@ export function initMobileDock(): void {
   // pinned to the "expanded" position forever and the user sees the
   // chevron drift out of sync with the dock state.
   setupCollapseToggle();
+  setupMenuSheet();
   syncViewportOffset();
   const vv = window.visualViewport;
   if (vv) {
@@ -182,6 +183,42 @@ function setupCollapseToggle(): void {
     syncViewportOffset();
     requestAnimationFrame(syncViewportOffset);
   });
+}
+
+// ☰ menu sheet: tapping the hamburger button slides the top toolbar
+// in from the top of the viewport behind a scrim. Backdrop tap, the
+// ESC key, or another tap on the button closes it. Phase 2 turns the
+// top toolbar into an on-demand sheet so the workspace gains all of
+// that vertical space on mobile.
+function setupMenuSheet(): void {
+  const toggle = document.getElementById('mobile-menu-toggle');
+  const backdrop = document.getElementById('mobile-menu-backdrop');
+  if (!toggle) return;
+
+  const close = () => {
+    if (!document.body.classList.contains('mobile-menu-open')) return;
+    document.body.classList.remove('mobile-menu-open');
+    toggle.setAttribute('aria-expanded', 'false');
+  };
+  const open = () => {
+    if (document.body.classList.contains('mobile-menu-open')) return;
+    document.body.classList.add('mobile-menu-open');
+    toggle.setAttribute('aria-expanded', 'true');
+  };
+  toggle.addEventListener('click', () => {
+    if (document.body.classList.contains('mobile-menu-open')) close(); else open();
+  });
+  backdrop?.addEventListener('click', close);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close();
+  });
+  // Auto-close when the user taps a toolbar button — they're done with
+  // the menu after picking an action. Sliders, checkboxes, and the
+  // theme cycle stay because the user typically chains those with
+  // other tweaks; we only close for terminal button presses.
+  document.querySelectorAll<HTMLElement>(
+    '#toolbar #open-btn, #toolbar #ai-bg-btn, #toolbar #ai-input-btn, #toolbar #material-add-btn, #toolbar #save-btn, #toolbar #separate-btn, #toolbar #cleanup-btn, #toolbar #auto-cleanup-btn, #toolbar #show-orig-btn, #toolbar #feather-btn, #toolbar #fit-btn, #toolbar #actual-btn, #toolbar #help-btn, #toolbar #undo-btn, #toolbar #redo-btn',
+  ).forEach(btn => btn.addEventListener('click', close));
 }
 
 function setupLongPressTooltips(): void {

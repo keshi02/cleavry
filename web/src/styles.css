@@ -893,9 +893,11 @@
     to   { opacity: 1; transform: translateX(-50%) translateY(0); }
   }
 
-  /* Desktop default for the mobile-only collapse handle. The mobile
-     media query below flips it to display:flex; on small screens. */
+  /* Desktop defaults for mobile-only chrome. The mobile media query
+     below flips these to display:flex; on small screens. */
   #mobile-toolbar-toggle { display: none; }
+  #mobile-menu-toggle { display: none; }
+  #mobile-menu-backdrop { display: none; }
 
   /* ──────────────────────────────────────────────────────────────────
      Mobile / small-screen layout (Phase 1)
@@ -1170,6 +1172,103 @@
        <kbd> so they remain visible. */
     .help-section dt:has(kbd) { display: none; }
     .help-section dt:has(kbd) + dd { display: none; }
+
+    /* ── Phase 2: ☰ tool menu sheet ───────────────────────────────
+       The top toolbar collapses into a slide-down sheet behind a
+       hamburger button. Default state is closed — only the menu
+       toggle (top-left), the undo/redo group (the user's most-used
+       cycle), and the chevron / dock sit on screen. Tapping ☰
+       slides the full toolbar in from the top behind a scrim. */
+    #toolbar {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 0px) + 60px);
+      left: 0;
+      right: 0;
+      max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 80px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      transform: translateY(calc(-100% - env(safe-area-inset-top, 0px) - 80px));
+      transition: transform 0.25s ease-out;
+      z-index: 40;
+      flex-wrap: wrap;
+      flex-direction: row;
+      padding: 12px 16px;
+      gap: 10px;
+      border-top: 0;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0 0 14px 14px;
+      box-shadow: var(--shadow-strong);
+      align-content: flex-start;
+    }
+    body.mobile-menu-open #toolbar {
+      transform: translateY(0);
+    }
+    /* In the sheet, each group sits on its own full-width row so the
+       sliders and labels have room. */
+    #toolbar > .group {
+      width: 100%;
+      flex-wrap: wrap;
+      padding: 8px 4px;
+      border-bottom: 1px solid var(--border);
+      gap: 8px;
+    }
+    #toolbar > .group:last-of-type { border-bottom: 0; }
+    /* Sliders span the available width in the sheet instead of the
+       tight 110px of the inline strip. */
+    #toolbar input[type=range] { flex: 1; min-width: 160px; }
+    /* Inline group labels (`サイズ:` etc.) become visible again in
+       the sheet so the user can tell what each slider controls. */
+    #toolbar .group > label[data-i18n] { display: inline; }
+    /* Re-show the labels inside the icon-text buttons within the
+       sheet — they're the primary affordance, not the icon. */
+    #toolbar .icon-btn-text > span[data-i18n] { display: inline; }
+    /* Re-show fit/100% inside the sheet (they're hidden inline on ≤480
+       to save space, but the sheet has plenty). */
+    #toolbar #fit-btn, #toolbar #actual-btn { display: inline-flex; }
+
+    #mobile-menu-toggle {
+      display: flex;
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 0px) + 8px);
+      left: 12px;
+      width: 44px;
+      height: 44px;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      box-shadow: var(--shadow-soft);
+      z-index: 45;
+    }
+    #mobile-menu-toggle svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+    body.mobile-menu-open #mobile-menu-toggle {
+      background: var(--panel-hi);
+    }
+
+    #mobile-menu-backdrop {
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: var(--scrim);
+      z-index: 38;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease-out;
+    }
+    body.mobile-menu-open #mobile-menu-backdrop {
+      opacity: 1;
+      pointer-events: auto;
+    }
 
     /* ── Collapse handle ──────────────────────────────────────────────
        A small chevron attached to the top edge of the bottom bar.

@@ -68,6 +68,7 @@ export default {
   'tip.themeDark': 'テーマ：ダーク（クリックでシステムに切替）',
   'tip.help': 'ショートカット一覧 (?)',
   'aria.mobileToolbarToggle': 'ツールバーの表示／非表示',
+  'aria.mobileMenuToggle': 'ツールメニュー',
 
   // Theme labels
   'theme.system': 'システム',

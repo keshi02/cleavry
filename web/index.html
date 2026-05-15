@@ -80,11 +80,14 @@
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
   <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
   <symbol id="i-chevron-down" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></symbol>
 </svg>
 
 <div id="app">
 
   <button id="mobile-toolbar-toggle" type="button" data-i18n-aria="aria.mobileToolbarToggle" aria-expanded="true"><svg><use href="#i-chevron-down"/></svg></button>
+  <button id="mobile-menu-toggle" type="button" data-i18n-aria="aria.mobileMenuToggle" aria-expanded="false"><svg><use href="#i-menu"/></svg></button>
+  <div id="mobile-menu-backdrop" aria-hidden="true"></div>
 
   <div id="toolbar">
     <div class="brand" aria-label="Cleavry">
