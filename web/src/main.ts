@@ -9,6 +9,7 @@ import { $, isOverlayActive } from './utils/dom';
 import { isMac } from './utils/platform';
 import { showToast } from './ui/toast';
 import { initTheme, cycleTheme } from './ui/theme';
+import { initMobileDock } from './ui/mobileDock';
 import { showModal } from './ui/modal';
 import { saveSession, loadSession, clearSession } from './persist/autosave';
 import { segmentBackground } from './ai/background';
@@ -2212,6 +2213,7 @@ bindCanvas();
 bindKeys();
 setupDragDrop();
 initTheme();
+initMobileDock();
 // Apply initial tool state to the DOM (hides the rect-select button until
 // a wand is picked, sets the active highlight, etc).
 setTool(state.tool);

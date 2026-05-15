@@ -67,6 +67,7 @@ export default {
   'tip.themeLight': 'Theme: Light (click to switch to Dark)',
   'tip.themeDark': 'Theme: Dark (click to switch to System)',
   'tip.help': 'Keyboard shortcuts (?)',
+  'aria.mobileToolbarToggle': 'Show/hide the tool bar',
 
   // Theme labels
   'theme.system': 'System',

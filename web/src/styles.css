@@ -852,7 +852,8 @@
      by carrying data-tip="..."; native title is left blank. Hover delay is
      ~150ms so it's responsive but doesn't flash on incidental passes. */
   [data-tip] { position: relative; }
-  [data-tip]:hover::after {
+  [data-tip]:hover::after,
+  [data-tip].is-tip-active::after {
     content: attr(data-tip);
     position: absolute;
     left: 50%;
@@ -873,14 +874,25 @@
     box-shadow: var(--shadow-soft);
     animation: tip-fade 0.12s ease-out 0.15s both;
   }
+  /* `.is-tip-active` is set by the long-press handler on touch; it
+     should appear instantly, not after the 150ms hover-debounce. */
+  [data-tip].is-tip-active::after {
+    animation: tip-fade 0.12s ease-out 0s both;
+  }
   /* For elements anchored at the bottom of the workspace, flip the tooltip
      above so it doesn't get clipped. */
   #separate-bar [data-tip]:hover::after,
-  #cleanup-bar [data-tip]:hover::after { top: auto; bottom: calc(100% + 6px); }
+  #separate-bar [data-tip].is-tip-active::after,
+  #cleanup-bar  [data-tip]:hover::after,
+  #cleanup-bar  [data-tip].is-tip-active::after { top: auto; bottom: calc(100% + 6px); }
   @keyframes tip-fade {
     from { opacity: 0; transform: translateX(-50%) translateY(-2px); }
     to   { opacity: 1; transform: translateX(-50%) translateY(0); }
   }
+
+  /* Desktop default for the mobile-only collapse handle. The mobile
+     media query below flips it to display:flex; on small screens. */
+  #mobile-toolbar-toggle { display: none; }
 
   /* ──────────────────────────────────────────────────────────────────
      Mobile / small-screen layout (Phase 1)
@@ -966,12 +978,15 @@
       min-height: 36px;
     }
 
-    /* ── Bottom tool bar (lifted from inline group via position:fixed) ── */
+    /* ── Bottom tool bar (lifted from inline group via position:fixed) ──
+       `--vv-bottom-offset` is updated from JS via the visualViewport API
+       so the bar clears iOS Safari's bottom URL/tab bar. Falls back to 0
+       on browsers / contexts without that API. */
     .group:has(> .tool-btns) {
       position: fixed;
       left: 0;
       right: 0;
-      bottom: 0;
+      bottom: var(--vv-bottom-offset, 0px);
       z-index: 30;
       background: var(--panel);
       border-top: 1px solid var(--border);
@@ -980,6 +995,12 @@
       margin: 0;
       gap: 0;
       box-shadow: 0 -2px 12px rgba(0,0,0,0.18);
+      transition: bottom 0.18s ease-out, transform 0.22s ease-out;
+    }
+    /* Collapsed: slide the bar fully below the visible area. Extra 12px
+       so the box-shadow ghost doesn't peek. */
+    body.mobile-tools-collapsed .group:has(> .tool-btns) {
+      transform: translateY(calc(100% + env(safe-area-inset-bottom, 0px) + 12px));
     }
     .group:has(> .tool-btns) .tool-btns {
       display: flex;
@@ -1014,12 +1035,31 @@
     .group:has(> .tool-btns) #rect-controls { display: none; }
 
     /* Push floating overlays above the fixed bottom bar so they stay
-       readable while the bar is on screen. */
+       readable while the bar is on screen. Both follow the same
+       viewport offset so they don't tuck under iOS Safari chrome
+       either. When the bar is collapsed they drop back down. */
     #toast {
-      bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+      bottom: calc(72px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
+      transition: bottom 0.22s ease-out, opacity 0.18s ease-out, transform 0.18s ease-out;
     }
     #separate-bar, #cleanup-bar {
-      bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+      bottom: calc(80px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
+      transition: bottom 0.22s ease-out;
+    }
+    body.mobile-tools-collapsed #toast {
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
+    }
+    body.mobile-tools-collapsed #separate-bar,
+    body.mobile-tools-collapsed #cleanup-bar {
+      bottom: calc(20px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
+    }
+
+    /* Long-press tooltips on bottom-bar tool buttons should appear ABOVE
+       the button, not below — below would render off-screen. */
+    .group:has(> .tool-btns) [data-tip]:hover::after,
+    .group:has(> .tool-btns) [data-tip].is-tip-active::after {
+      top: auto;
+      bottom: calc(100% + 6px);
     }
 
     /* Status row is non-critical on mobile and would collide with the
@@ -1035,6 +1075,49 @@
       max-width: 180px;
       font-size: 11px;
       padding: 6px 8px;
+    }
+
+    /* ── Collapse handle ──────────────────────────────────────────────
+       A small chevron attached to the top edge of the bottom bar.
+       Tap to slide the bar away (chevron flips to point up); tap
+       again to bring it back. Position is computed so it sits flush
+       on top of the bar in both states and never gets covered by
+       iOS Safari's bottom chrome. */
+    #mobile-toolbar-toggle {
+      display: flex;
+      position: fixed;
+      right: 12px;
+      bottom: calc(64px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
+      z-index: 31;
+      width: 44px;
+      height: 22px;
+      padding: 0;
+      align-items: center;
+      justify-content: center;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-bottom: 0;
+      border-radius: 8px 8px 0 0;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.18);
+      color: var(--muted);
+      transition: bottom 0.22s ease-out, color 0.12s ease-out;
+    }
+    #mobile-toolbar-toggle svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.22s ease-out;
+    }
+    #mobile-toolbar-toggle:hover { color: var(--text); }
+    body.mobile-tools-collapsed #mobile-toolbar-toggle {
+      bottom: calc(env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
+    }
+    body.mobile-tools-collapsed #mobile-toolbar-toggle svg {
+      transform: rotate(180deg);
     }
   }
 
