@@ -26,8 +26,8 @@
 // hide the bar on first load under the corrected CSS — surfacing as
 // "the bar isn't there on my phone". v2 starts everyone expanded; the
 // old key is cleaned up below.
-const COLLAPSE_KEY = 'cleavry-mobile-tools-collapsed-v2';
-const LEGACY_COLLAPSE_KEYS = ['cleavry-mobile-tools-collapsed'];
+const COLLAPSE_KEY = 'cleavry-mobile-tools-collapsed-v3';
+const LEGACY_COLLAPSE_KEYS = ['cleavry-mobile-tools-collapsed', 'cleavry-mobile-tools-collapsed-v2'];
 const LONG_PRESS_MS = 500;
 const LONG_PRESS_MOVE_TOL = 10;
 const TIP_AUTODISMISS_MS = 2500;
