@@ -48,6 +48,9 @@ export function initMobileDock(): void {
   setupLongPressTooltips();
 }
 
+let isIOSPlatform = false;
+const IOS_MIN_CHROME_PX = 80;
+
 // Tag <html> so iOS-specific rules can force a minimum bottom clearance
 // even when neither visualViewport nor `100dvh` reports any chrome.
 // iOS Safari with the bottom URL bar can leave both reporting zero
@@ -56,9 +59,10 @@ function detectIOSPlatform(): void {
   const ua = navigator.userAgent;
   // Match iPhone / iPod / iPad. Also catches iPadOS 13+ which masquerades
   // as Mac but exposes touch.
-  const isIOS = /iPad|iPhone|iPod/.test(ua)
+  isIOSPlatform = /iPad|iPhone|iPod/.test(ua)
               || (/Macintosh/.test(ua) && 'ontouchend' in document);
-  if (isIOS) document.documentElement.classList.add('ios');
+  if (isIOSPlatform) document.documentElement.classList.add('ios');
+  console.log('[mobileDock] iOS detected:', isIOSPlatform, 'UA:', ua.slice(0, 80));
 }
 
 // Tag the .group that wraps the .tool-btns container so the mobile
@@ -101,16 +105,21 @@ function tagToolDock(): void {
 
 function syncViewportOffset(): void {
   const vv = window.visualViewport;
-  if (!vv) {
-    document.documentElement.style.setProperty('--vv-bottom-offset', '0px');
-    return;
+  let gap = 0;
+  if (vv) {
+    // window.innerHeight is the layout viewport height (constant across
+    // chrome show/hide on iOS). vv.height + vv.offsetTop is where the
+    // visible region ends in layout coords. Their difference is exactly
+    // the browser chrome covering the bottom — when iOS bothers to
+    // report it; sometimes it stays at 0 even with chrome visible.
+    gap = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
   }
-  // window.innerHeight is the layout viewport height (constant across
-  // chrome show/hide on iOS). vv.height + vv.offsetTop is where the
-  // visible region ends in layout coords. Their difference is exactly
-  // the browser chrome covering the bottom.
-  const gap = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
+  // iOS Safari floor: even when both visualViewport and 100dvh report
+  // zero, the bottom URL bar still overlays content. Force a minimum
+  // clearance so the dock is always above chrome.
+  if (isIOSPlatform) gap = Math.max(gap, IOS_MIN_CHROME_PX);
   document.documentElement.style.setProperty('--vv-bottom-offset', `${gap}px`);
+  console.log('[mobileDock] offset set to', gap, 'px; vv:', vv?.height, '/', window.innerHeight);
 }
 
 function setupCollapseToggle(): void {
