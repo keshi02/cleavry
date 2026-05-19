@@ -241,13 +241,29 @@
     background-size: 24px 24px;
     background-position: 0 0, 0 12px, 12px -12px, 12px 0;
     background-color: var(--checker-2);
-    cursor: none;
     /* Suppress browser default touch gestures (pinch-zoom, double-tap zoom,
        pull-to-refresh) so pointer events drive everything on tablets and
        phones. Two-finger pinch is handled in JS below. */
     touch-action: none;
     overscroll-behavior: contain;
   }
+  /* Only hide the system cursor while a base image is loaded — that's when
+     #cursor-overlay (or a mode-specific cursor below) takes over. Without
+     an image the workspace shows the empty-hint / help-overlay UI, where a
+     normal arrow is what the user expects. `cursor` inherits, so children
+     (including overlays) pick this up too. */
+  #workspace.has-image { cursor: none; }
+  /* Overlays sit on top of #workspace but are normal UI surfaces — buttons,
+     scrollable text, dropdowns. Reset cursor so the inherited `none` from
+     #workspace.has-image doesn't make the pointer vanish over them. */
+  #help-overlay,
+  #progress-overlay,
+  #empty-hint,
+  #drop-overlay,
+  #layer-panel,
+  #separate-bar,
+  #cleanup-bar,
+  #toast { cursor: auto; }
   /* Wand tools have no brush-radius overlay, so the workspace's default
      `cursor: none` would leave the user without any visible pointer.
      Placed before the pan / separate / rect-select rules so those modes

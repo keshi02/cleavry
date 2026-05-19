@@ -84,6 +84,10 @@ function updateStatus() {
   $('undo-status').textContent = state.imgW
     ? `${t('status.history')}: ${uLen} / ${state.maxUndo}`
     : '';
+  // `has-image` flips the workspace cursor from system-default (so the
+  // empty-state hint and help overlay show a normal arrow) to `none`
+  // (so the brush ring / mode-specific cursors take over).
+  workspace.classList.toggle('has-image', !!state.workData);
   // Base-only features stay tied to workData; the material-add button
   // also requires a base image as the host canvas.
   $('save-btn').disabled = !state.workData;
