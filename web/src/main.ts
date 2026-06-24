@@ -1356,23 +1356,13 @@ function loadMaterialFromFile(file: File): void {
   }
   const img = new Image();
   img.onload = () => {
-    let w = img.width, h = img.height;
-    // Shrink huge materials so they don't blow past the canvas. We aim
-    // for "fits within ~60% of the canvas" so the user can still see
-    // where to drop it.
-    const scale = Math.min(1, (state.imgW * 0.6) / w, (state.imgH * 0.6) / h);
-    if (scale < 1) {
-      w = Math.max(1, Math.round(w * scale));
-      h = Math.max(1, Math.round(h * scale));
-    }
+    // Add the material at its intrinsic size — no downscaling. The user
+    // can move / resize it afterwards if it overflows the canvas.
+    const w = img.width, h = img.height;
     const tmp = document.createElement('canvas');
     tmp.width = w; tmp.height = h;
     const tctx = tmp.getContext('2d')!;
-    if (scale < 1) {
-      tctx.imageSmoothingEnabled = true;
-      tctx.imageSmoothingQuality = 'high';
-    }
-    tctx.drawImage(img, 0, 0, w, h);
+    tctx.drawImage(img, 0, 0);
     const id = tctx.getImageData(0, 0, w, h);
 
     const m: MaterialLayer = {
@@ -1388,6 +1378,9 @@ function loadMaterialFromFile(file: File): void {
     };
     state.materials.push(m);
     state.activeMaterialId = m.id;
+    // A material just became active — surface the move button right away
+    // (refreshToolButtonsActive keys its visibility off the active material).
+    refreshToolButtonsActive();
     renderLayerPanel();
     redraw();
     updateStatus();
@@ -1968,7 +1961,7 @@ function bindCanvas() {
     // Without this guard, setPointerCapture below would steal the click and
     // those buttons would never fire — the user would see the bar but every
     // button would be dead.
-    if (e.target.closest('#help-overlay, #progress-overlay, #separate-bar, #cleanup-bar')) return;
+    if (e.target.closest('#help-overlay, #progress-overlay, #separate-bar, #cleanup-bar, #layer-panel')) return;
     if (isOverlayActive()) return;
 
     workspace.setPointerCapture(e.pointerId);
