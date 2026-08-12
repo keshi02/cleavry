@@ -263,6 +263,7 @@
   #layer-panel,
   #separate-bar,
   #cleanup-bar,
+  #part-bar,
   #toast { cursor: auto; }
   /* Wand tools have no brush-radius overlay, so the workspace's default
      `cursor: none` would leave the user without any visible pointer.
@@ -424,7 +425,7 @@
   #workspace.move-mode * { cursor: move; }
   #workspace.separate-mode,
   #workspace.separate-mode * { cursor: pointer; }
-  #separate-bar, #cleanup-bar {
+  #separate-bar, #cleanup-bar, #part-bar {
     position: absolute;
     left: 50%;
     bottom: 16px;
@@ -442,9 +443,9 @@
     flex-wrap: wrap;
     max-width: calc(100% - 40px);
   }
-  #separate-bar.show, #cleanup-bar.show { display: flex; }
-  #separate-bar .info, #cleanup-bar .info { color: var(--muted); margin-right: 4px; }
-  #separate-bar .info b, #cleanup-bar .info b { color: var(--text); font-weight: 600; }
+  #separate-bar.show, #cleanup-bar.show, #part-bar.show { display: flex; }
+  #separate-bar .info, #cleanup-bar .info, #part-bar .info { color: var(--muted); margin-right: 4px; }
+  #separate-bar .info b, #cleanup-bar .info b, #part-bar .info b { color: var(--text); font-weight: 600; }
   #cleanup-bar .threshold { display: flex; align-items: center; gap: 6px; color: var(--muted); }
   #cleanup-bar .threshold input[type=range] { width: 120px; }
   #status {
@@ -903,7 +904,9 @@
   #separate-bar [data-tip]:hover::after,
   #separate-bar [data-tip].is-tip-active::after,
   #cleanup-bar  [data-tip]:hover::after,
-  #cleanup-bar  [data-tip].is-tip-active::after { top: auto; bottom: calc(100% + 6px); }
+  #cleanup-bar  [data-tip].is-tip-active::after,
+  #part-bar     [data-tip]:hover::after,
+  #part-bar     [data-tip].is-tip-active::after { top: auto; bottom: calc(100% + 6px); }
   @keyframes tip-fade {
     from { opacity: 0; transform: translateX(-50%) translateY(-2px); }
     to   { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -1111,7 +1114,7 @@
       bottom: calc(72px + env(safe-area-inset-bottom, 0px)
                    + max(60px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
     }
-    html.ios #separate-bar, html.ios #cleanup-bar {
+    html.ios #separate-bar, html.ios #cleanup-bar, html.ios #part-bar {
       bottom: calc(80px + env(safe-area-inset-bottom, 0px)
                    + max(60px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
     }
@@ -1120,7 +1123,8 @@
                    + max(60px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
     }
     html.ios body.mobile-tools-collapsed #separate-bar,
-    html.ios body.mobile-tools-collapsed #cleanup-bar {
+    html.ios body.mobile-tools-collapsed #cleanup-bar,
+    html.ios body.mobile-tools-collapsed #part-bar {
       bottom: calc(20px + env(safe-area-inset-bottom, 0px)
                    + max(60px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
     }
@@ -1134,7 +1138,7 @@
       bottom: calc(72px + env(safe-area-inset-bottom, 0px) + max(80px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
       transition: bottom 0.22s ease-out, opacity 0.18s ease-out, transform 0.18s ease-out;
     }
-    #separate-bar, #cleanup-bar {
+    #separate-bar, #cleanup-bar, #part-bar {
       bottom: calc(80px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
       bottom: calc(80px + env(safe-area-inset-bottom, 0px) + max(80px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
       transition: bottom 0.22s ease-out;
@@ -1144,7 +1148,8 @@
       bottom: calc(16px + env(safe-area-inset-bottom, 0px) + max(80px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
     }
     body.mobile-tools-collapsed #separate-bar,
-    body.mobile-tools-collapsed #cleanup-bar {
+    body.mobile-tools-collapsed #cleanup-bar,
+    body.mobile-tools-collapsed #part-bar {
       bottom: calc(20px + env(safe-area-inset-bottom, 0px) + var(--vv-bottom-offset, 0px));
       bottom: calc(20px + env(safe-area-inset-bottom, 0px) + max(80px, var(--vv-bottom-offset, 0px), calc(100vh - 100dvh)));
     }

@@ -110,6 +110,7 @@
         <option value="jpeg">JPEG</option>
       </select>
       <button id="separate-btn" class="icon-btn-text" data-i18n-aria="btn.separate" data-i18n-tip="tip.separate" disabled><svg><use href="#i-scissors"/></svg> <span data-i18n="btn.separate">分離保存</span></button>
+      <button id="part-btn" class="icon-btn-text" data-i18n-aria="btn.part" data-i18n-tip="tip.part" disabled><svg><use href="#i-layers"/></svg> <span data-i18n="btn.part">パーツ分け</span></button>
       <button id="cleanup-btn" class="icon-btn-text" data-i18n-aria="btn.cleanup" data-i18n-tip="tip.cleanup" disabled><svg><use href="#i-wind"/></svg> <span data-i18n="btn.cleanup">ノイズ削除</span></button>
       <button id="auto-cleanup-btn" class="icon-btn-text" data-i18n-aria="btn.autoCleanup" data-i18n-tip="tip.autoCleanup" disabled><svg><use href="#i-wand"/></svg> <span data-i18n="btn.autoCleanup">自動ノイズ除去</span></button>
       <label data-i18n-tip="tip.autoCleanupThreshold"><span data-i18n="label.threshold">≤</span> <input type="number" id="auto-cleanup-threshold" min="1" max="2000" value="16"> <span data-i18n="label.thresholdSuffix">px²</span></label>
@@ -206,6 +207,13 @@
       <button id="separate-none" data-tip="全解除">全解除</button>
       <button id="separate-save" class="icon-btn-text" aria-label="ZIP で保存" data-tip="選択分を ZIP で保存" disabled><svg><use href="#i-package"/></svg> ZIP 保存<span id="separate-save-count"></span></button>
       <button id="separate-cancel" data-tip="キャンセル (ESC)">キャンセル</button>
+    </div>
+    <div id="part-bar">
+      <span class="info"><b id="part-count">0</b> <span data-i18n="part.unit">パーツ</span></span>
+      <button id="part-commit" class="icon-btn-text" data-i18n-aria="part.commit" data-i18n-tip="part.commitTip"><svg><use href="#i-layers"/></svg> <span data-i18n="part.commit">パーツ確定</span></button>
+      <button id="part-undo" data-i18n-tip="part.undoTip" data-i18n="part.undo" disabled>取消</button>
+      <button id="part-save" class="icon-btn-text" data-i18n-aria="part.save" data-i18n-tip="part.saveTip" disabled><svg><use href="#i-package"/></svg> <span data-i18n="part.save">ZIP 保存</span><span id="part-save-count"></span></button>
+      <button id="part-exit" data-i18n-tip="part.exitTip" data-i18n="part.exit">終了</button>
     </div>
     <div id="cleanup-bar">
       <span class="info"><b id="cleanup-keep-count">0</b> / <span id="cleanup-total">0</span> 個残す（緑＝残す / 赤＝削除）</span>

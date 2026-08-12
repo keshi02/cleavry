@@ -94,6 +94,8 @@ function updateStatus() {
   $('save-format').disabled = !state.workData;
   $('separate-btn').disabled = !state.workData || !!activeMat;
   $('cleanup-btn').disabled = !state.workData || !!activeMat;
+  // Part-split records the base canvas, so it stays base-only too.
+  $('part-btn').disabled = !state.workData || !!activeMat || state.partMode;
   // Auto-cleanup is alpha-wipe-by-component, which makes sense on a
   // material layer too (e.g. trimming AI-segmented stray specks on a
   // pasted-in cutout). The interactive cleanup mode still stays base-
@@ -167,6 +169,9 @@ function loadImageFromFile(file) {
     renderLayerPanel();
     if (state.separateMode) exitSeparateMode();
     if (state.cleanupMode) exitCleanupMode();
+    // Parts are tied to the old canvas size and position — a new base image
+    // makes them meaningless.
+    if (state.partMode) exitPartMode();
     clearFeatherToggle();
     hideOriginalOverlay();
     clearRectSelection();
@@ -272,6 +277,9 @@ function loadAIOutputFile(file) {
     if (state.cleanupMode) exitCleanupMode();
     pushUndo();
     state.workData = new Uint8ClampedArray(id.data);
+    // Same canvas, cleaner source — carry the part-split baseline forward so
+    // the next commit resets to the improved version, not the old one.
+    if (state.partMode) state.partBaseline = new Uint8ClampedArray(state.workData);
     redraw();
     updateStatus();
     URL.revokeObjectURL(img.src);
@@ -741,6 +749,7 @@ async function startSeparateMode() {
   state.separateMode = true;
 
   $('separate-bar').classList.add('show');
+  setPartBarVisible(false);
   workspace.classList.add('separate-mode');
   cursor.style.display = 'none';
 
@@ -753,6 +762,7 @@ function exitSeparateMode() {
   state.components = [];
   state.componentMask = null;
   $('separate-bar').classList.remove('show');
+  setPartBarVisible(true);
   workspace.classList.remove('separate-mode');
   drawComponentOverlay();
 }
@@ -865,6 +875,149 @@ async function saveSelectedComponents() {
 }
 
 // ============================================================================
+// Part-split mode — carve one picture into hand-picked parts.
+// ============================================================================
+// Separate mode splits by connected components, which is useless when every
+// part of the drawing touches every other one (a character's head, coat and
+// legs are one blob). Here the user does the cutting: erase everything except
+// the head, commit, and the canvas snaps back to where the mode started so the
+// coat can be carved out of the same source. Committed parts always keep the
+// full canvas — stacked back together they reproduce the original image, which
+// is what makes the exported PNGs usable as animation/rig layers.
+//
+// Only the base canvas is recorded. Material layers ride above it and are left
+// untouched so they don't bleed into every part.
+// ============================================================================
+function updatePartInfo() {
+  $('part-count').textContent = state.parts.length;
+  $('part-undo').disabled = state.parts.length === 0;
+  $('part-save').disabled = state.parts.length === 0;
+  $('part-save-count').textContent = state.parts.length === 0 ? '' : ` (${state.parts.length})`;
+}
+
+function startPartMode() {
+  if (!state.workData || state.partMode) return;
+  state.partMode = true;
+  state.partBaseline = new Uint8ClampedArray(state.workData);
+  state.parts = [];
+  $('part-bar').classList.add('show');
+  updatePartInfo();
+  updateStatus();
+}
+
+function exitPartMode() {
+  state.partMode = false;
+  state.partBaseline = null;
+  state.parts = [];
+  $('part-bar').classList.remove('show');
+  updateStatus();
+}
+
+function commitPart() {
+  if (!state.partMode || !state.workData || !state.partBaseline) return;
+  // A wand pass in flight is about to rewrite workData — committing now would
+  // record the pre-wand pixels and then have the wand paint over the reset
+  // canvas. Same reason startSeparateMode() guards on it.
+  if (isWandRunning() || state.pendingWandClick) return;
+  if (!state.workData.some((v, i) => i % 4 === 3 && v !== 0)) {
+    showError(t('error.partEmpty'));
+    return;
+  }
+  state.parts.push(new Uint8ClampedArray(state.workData));
+  state.workData.set(state.partBaseline);
+  // The strokes that carved this part belong to it, not to the next one.
+  state.undo = [];
+  state.redo = [];
+  clearRectSelection();
+  redraw();
+  updateStatus();
+  updatePartInfo();
+  showToast(t('toast.partCommitted'));
+  scheduleAutosave();
+}
+
+// Leaving throws away everything committed so far, and there's no undo for
+// that — confirm once if the user has anything to lose.
+async function requestExitPartMode() {
+  if (state.parts.length > 0) {
+    const choice = await showModal({
+      title: t('part.exitConfirmTitle'),
+      message: `${state.parts.length} ${t('part.unit')}\n\n${t('part.exitConfirmBody')}`,
+      buttons: [
+        { label: t('part.exitConfirmDiscard'), value: 'exit' },
+        { label: t('part.exitConfirmCancel'), value: 'cancel', primary: true },
+      ],
+    });
+    if (choice !== 'exit') return;
+  }
+  exitPartMode();
+}
+
+function undoLastPart() {
+  if (state.parts.length === 0) return;
+  state.parts.pop();
+  updatePartInfo();
+}
+
+async function savePartsZip() {
+  if (state.parts.length === 0) return;
+  if (typeof JSZip === 'undefined') {
+    showError(t('error.zipFailed'));
+    return;
+  }
+
+  showProgress(t('progress.png'));
+  await new Promise(r => setTimeout(r, 30));
+
+  const W = state.imgW, H = state.imgH;
+  const zip = new JSZip();
+  const base = (state.filename || 'image').replace(/\.[^.]+$/, '') || 'image';
+  const pad = String(state.parts.length).length;
+
+  for (let i = 0; i < state.parts.length; i++) {
+    // Always full-canvas, regardless of the preserve-canvas toggle: parts are
+    // only useful if they share one coordinate system.
+    const src = state.parts[i];
+    const data = state.featherActive
+      ? feather(src, W, H, (state.featherStrength | 0) || 1)
+      : src;
+    const tmp = document.createElement('canvas');
+    tmp.width = W;
+    tmp.height = H;
+    tmp.getContext('2d').putImageData(new ImageData(data, W, H), 0, 0);
+    const blob = await new Promise(res => tmp.toBlob(res, 'image/png'));
+    zip.file(`${base}_part${String(i + 1).padStart(pad, '0')}.png`, blob);
+    updateProgress(((i + 1) / state.parts.length) * 95);
+  }
+
+  setProgressTitle(t('progress.zip'));
+  const zipBlob = await zip.generateAsync(
+    { type: 'blob' },
+    meta => updateProgress(95 + meta.percent * 0.05)
+  );
+  hideProgress();
+
+  const url = URL.createObjectURL(zipBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${base}_parts.zip`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  showToast(`${t('toast.partsSaved')}（${state.parts.length}）`);
+}
+
+// Separate / cleanup put their own bar in the same slot at the bottom of the
+// workspace. Tuck the part bar away while one of them is open — the mode
+// itself (and everything committed so far) survives untouched.
+function setPartBarVisible(visible) {
+  if (!state.partMode) return;
+  $('part-bar').classList.toggle('show', visible);
+}
+
+// ============================================================================
 // Cleanup mode — pick which components to KEEP, everything else is erased.
 // Shares detectComponents() / componentMask / drawComponentOverlay() with
 // separate mode; the visual semantics flip (green=keep, red=delete) and the
@@ -903,6 +1056,7 @@ async function startCleanupMode() {
   state.cleanupMode = true;
 
   $('cleanup-bar').classList.add('show');
+  setPartBarVisible(false);
   $('cleanup-threshold').value = 0;
   $('cleanup-threshold-display').textContent = '0';
   workspace.classList.add('separate-mode');  // pointer cursor for picking
@@ -917,6 +1071,7 @@ function exitCleanupMode() {
   state.components = [];
   state.componentMask = null;
   $('cleanup-bar').classList.remove('show');
+  setPartBarVisible(true);
   workspace.classList.remove('separate-mode');
   drawComponentOverlay();
 }
@@ -1104,6 +1259,7 @@ async function runAIBackgroundRemoval() {
     for (let i = 0; i < N; i++) {
       state.workData[i * 4 + 3] = alphaMask[i];
     }
+    if (state.partMode) state.partBaseline = new Uint8ClampedArray(state.workData);
     redraw();
     hideProgress();
   } catch (err) {
@@ -1687,6 +1843,12 @@ function bindUI() {
   $('separate-none').onclick = () => selectAllComponents(false);
   $('separate-save').onclick = saveSelectedComponents;
   $('separate-cancel').onclick = exitSeparateMode;
+
+  $('part-btn').onclick = startPartMode;
+  $('part-commit').onclick = commitPart;
+  $('part-undo').onclick = undoLastPart;
+  $('part-save').onclick = savePartsZip;
+  $('part-exit').onclick = requestExitPartMode;
 
   $('cleanup-btn').onclick = startCleanupMode;
   $('cleanup-all').onclick = () => selectAllComponents(true);

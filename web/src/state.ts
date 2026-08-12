@@ -102,6 +102,14 @@ export interface AppState {
   components: ConnectedComponent[];
   componentMask: Uint32Array | null;        // W*H, 0=背景, 1+ = 成分ID
 
+  // Part-split mode. The user erases everything except one part, commits it,
+  // and the canvas snaps back to partBaseline so the next part can be carved
+  // out of the same source. Every committed part keeps the full canvas so the
+  // exported PNGs stack back into the original image without realignment.
+  partMode: boolean;
+  partBaseline: Uint8ClampedArray | null;   // canvas as it was when the mode started
+  parts: Uint8ClampedArray[];               // committed parts, RGBA at imgW × imgH
+
   preserveCanvas: boolean;                  // keep canvas size & positions on save
   featherActive: boolean;                   // export-time feather toggle
   featherStrength: number;                  // 1..3 iterations
@@ -168,6 +176,9 @@ export const state: AppState = {
   cleanupMode: false,
   components: [],
   componentMask: null,
+  partMode: false,
+  partBaseline: null,
+  parts: [],
   preserveCanvas: true,
   featherActive: false,
   featherStrength: 1,
