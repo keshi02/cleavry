@@ -106,6 +106,7 @@
     align-items: center;
   }
   .group {
+    flex-wrap: wrap;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -120,6 +121,7 @@
     height: 0;
   }
   .group label {
+    white-space: nowrap;
     font-size: 11px;
     color: var(--muted);
     margin-right: 2px;
@@ -183,6 +185,7 @@
     height: 16px;
   }
   .icon-btn-text {
+    white-space: nowrap;
     display: inline-flex;
     align-items: center;
     gap: 5px;
