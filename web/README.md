@@ -12,6 +12,10 @@ npm install
 npm run dev
 ```
 
+開発サーバーは localhost のみで待ち受けます。スマホ実機で確認するときだけ
+`npm run dev -- --host`（preview も同様）で LAN に公開してください。信頼できない
+Wi-Fi では使わないこと。
+
 ## Build
 
 ```bash
